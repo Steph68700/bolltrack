@@ -1,0 +1,304 @@
+body {
+  position: relative;
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: #111;
+  color: #f1f1f1;
+  line-height: 1.6;
+  z-index: 0;
+}
+
+
+body::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('Fond.jpg') no-repeat center top;
+  background-size: cover;
+  opacity: 0.15;
+  z-index: -1;
+}
+
+
+/* TOP TOP BAR */
+.top-top-bar {
+  background: #000;
+  color: #ff4081;
+  display: flex;
+  justify-content: CENTER;
+  align-items: center;
+  font-size: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.top-left a {
+  color: #ff4081;
+  text-decoration: none;
+}
+
+.top-left a:hover {
+  text-decoration: underline;
+}
+
+.section a {
+  color: #ffff99;
+}
+
+.section a:hover {
+  color: #ff4081;
+  text-decoration: underline;
+}
+
+.top-center {
+  flex: 1;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* HEADER */
+header {
+  background: #222;
+  padding: 5px 5px 5px; /* ← Augmenté en haut et en bas */
+  text-align: center;
+}
+
+
+.header-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+
+.title-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.menu-right {
+  flex: 1;
+  text-align: right;
+}
+
+.button-left {
+  flex: 1;
+  text-align: left;
+}
+
+
+.menu-button {
+  font-size: 1.1rem;      /* Réduction de la taille du texte */
+  padding: 4px 8px;       /* Réduction des marges internes */
+  background: none;
+  border: 1px solid #ff4081; /* Optionnel : pour bien le délimiter */
+  border-radius: 4px;
+  color: #ff4081;
+  cursor: pointer;
+}
+
+.menu-button:hover {
+  color: #fff;
+}
+
+header h1 {
+  margin: 2px 0;
+  font-size: 1.8rem;
+  color: #ff4081;
+}
+
+
+/* TOP CENTER - alignement vertical et texte blanc pour le lieu */
+.top-center {
+  flex: 1;
+  text-align: center;
+  font-weight: bold;
+  color: #fff;
+  white-space: nowrap;
+  font-size: 0.95rem;
+  padding: 2px 0;
+}
+
+/* Dropdown menu plus petit */
+.dropdown-menu {
+  background: #222;
+  border: 1px solid #ff4081;
+  padding: 5px 10px;
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 5px;
+  z-index: 1000;
+}
+
+.dropdown-menu a {
+  color: #ff4081;
+  text-decoration: none;
+  padding: 4px 0;
+}
+
+.dropdown-menu a:hover {
+  background-color: #333;
+  color: #fff;
+}
+
+
+.hidden {
+  display: none;
+}
+
+/* CONTENU */
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+}
+
+.section {
+  margin-bottom: 40px;
+}
+
+h1 {
+  color: #ff4081;
+  padding-bottom: 0px;
+  margin-bottom: 0px;
+  margin-top: 0px;
+}
+
+h2 {
+  border-bottom: 2px solid #ff4081;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  color: #ff4081;
+}
+
+a.button {
+  display: inline-block;
+  background: #ff4081;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 5px;
+  text-decoration: none;
+  margin-top: 10px;
+}
+
+.groupe-section {
+  background: #1b1b1b;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.groupe-logo {
+  width: 150px;
+  height: 100px;
+}
+
+.groupe-description {
+  margin: 15px 0;
+  color: #ddd;
+}
+
+.groupe-links a {
+  color: #ff4081;
+  margin: 0 10px;
+  text-decoration: none;
+}
+
+.groupe-links a:hover {
+  text-decoration: underline;
+}
+
+audio {
+  margin-top: 10px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.timeline-horizontal {
+  display: flex;
+  overflow-x: auto;
+  padding: 20px 0;
+  gap: 20px;
+  scroll-snap-type: x mandatory;
+}
+
+.timeline-item {
+  background: #1e1e1e;
+  border: 2px solid #ff4081;
+  border-radius: 10px;
+  padding: 15px 20px;
+  min-width: 150px;
+  text-align: center;
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+.timeline-item .time {
+  font-size: 1.2rem;
+  color: #ff4081;
+  display: block;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.timeline-item .band {
+  font-size: 1.1rem;
+  color: #f1f1f1;
+}
+
+.tshirt-large {
+  display: block;
+  max-width: 250px;
+  margin: 10px auto;
+  border-radius: 6px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+
+
+/* LISTES ET TABLES */
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+ul li {
+  padding: 5px 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #1e1e1e;
+}
+
+table th, table td {
+  border: 1px solid #333;
+  padding: 10px;
+  text-align: left;
+}
+
+table th {
+  background: #333;
+}
+
+/* IMAGES */
+img {
+  max-width: 100%;
+  border: 2px solid #ff4081;
+  border-radius: 5px;
+}
+
+/* FOOTER */
+footer {
+  text-align: center;
+  padding: 20px;
+  background: #222;
+  font-size: 0.9rem;
+}

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Boll Track Festival</title>
+  <meta name="description" content="Boll Track est un festival de musique Rock/Metal organisé à Bollwiller le 6 septembre 2025. Découvrez la programmation complète, le plan et réservez vos billets.">
+  <meta name="keywords" content="Boll Track, festival, musique, rock, metal, Bollwiller, concerts, Alsace, scène, live, 2025">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="Boll Track Festival">
+  <meta property="og:title" content="Boll Track Festival 2025 - Événement rock/metal à Bollwiller">
+  <meta property="og:description" content="Rejoignez-nous pour une journée de musique rock/metal à Bollwiller avec Syr Daria, Antechaos, Alita et plus.">
+  <meta property="og:image" content="https://www.bolltrack.fr/images/cover.jpg">
+  <meta property="og:url" content="https://www.bolltrack.fr">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Boll Track Festival 2025">
+  <meta name="twitter:description" content="Le 6 septembre 2025 à Bollwiller - Festival rock/metal avec groupes live et ambiance unique.">
+  <meta name="twitter:image" content="https://www.bolltrack.fr/images/cover.jpg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="top-top-bar">
+  <div class="top-left">
+    <a href="https://www.facebook.com/profile.php?id=61576657292655" target="_blank">Facebook ||</a>
+    <a href="https://www.instagram.com/bolltrack/" target="_blank">Instagram</a>
+  </div>
+  <div class="top-center">
+    <h1>Boll Track Festival</h1> 
+		      06 septembre 2025 à Bollwiller - 103 avenue du château
+		<div id="countdown" class="countdown-timer"><h1>🕒 Le festival commence dans : Chargement... </h1></div>
+		<p></p>
+  </div>
+  <div class="button-right">
+    <a href="https://www.helloasso.com/associations/omen-haze/evenements/boll-track-festival-1" target="_blank" class="button">🎟 Acheter des billets</a>
+  </div>
+</div>
+
+<header>
+
+    <button class="menu-button" onclick="toggleMenu()">☰ Menu</button>
+    <div id="dropdown-menu" class="dropdown-menu hidden">
+	  <a href="index.html">Accueil</a>
+      <a href="groupes.html">Groupes et programmation</a>
+	  <a href="billeterie.html">Billeterie et Restauration</a>
+      <a href="plan.html">Plan du festival et Accès</a>
+	  <a href="infos.html">Infos utiles et contact</a>
+    </div>
+</header>
+
+
+
+
+  <footer>
+    &copy; 2025 Festival Boll Track - Tous droits réservés
+  </footer>
+  <script>
+  
+function toggleMenu() {
+  const menu = document.getElementById("dropdown-menu");
+  menu.classList.toggle("hidden");
+}
+</script>
+
+<script>
+  const countdown = () => {
+    const targetDate = new Date("September 6, 2025 15:30:00").getTime(); // Tu peux adapter l'heure
+    const now = new Date().getTime();
+    const difference = targetDate - now;
+
+    if (difference <= 0) {
+      document.getElementById("countdown").innerHTML = "Le festival a commencé !";
+      return;
+    }
+
+    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+    document.getElementById("countdown").innerHTML =
+      `${days} jours ${hours} heures ${minutes} minutes ${seconds} secondes`;
+  };
+
+  setInterval(countdown, 1000);
+  countdown(); // lancement immédiat
+</script>
+
+</body>
+</html>
