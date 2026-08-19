@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Merchandising et restauration — Boll’Track Hivernal 2026</title>
+  <meta name="description" content="Découvrez le merchandising officiel et les informations de restauration du Boll’Track Hivernal 2026.">
+  <meta name="keywords" content="Boll Track Hivernal, merchandising, restauration, T-shirt, bonnet, sweat, Bollwiller, 2026">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="Boll Track Festival">
+  <meta property="og:title" content="Merchandising et restauration — Boll’Track Hivernal 2026">
+  <meta property="og:description" content="Le merchandising officiel du Boll’Track Hivernal sera disponible sur place.">
+  <meta property="og:image" content="https://www.bolltrack.fr/Fond.jpg">
+  <meta property="og:url" content="https://www.bolltrack.fr/merchandising.html">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Merchandising et restauration — Boll’Track Hivernal 2026">
+  <meta name="twitter:description" content="Le merchandising officiel du Boll’Track Hivernal sera disponible sur place.">
+  <meta name="twitter:image" content="https://www.bolltrack.fr/Fond.jpg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="top-top-bar">
+  <div class="top-left">
+    <a href="https://www.facebook.com/profile.php?id=61576657292655">Facebook ||</a>
+    <a href="https://www.instagram.com/bolltrack/">Instagram</a>
+  </div>
+  <div class="top-center">
+    <h1><a href="index.html" class="site-title">Boll Track Festival</a></h1>
+              07 novembre 2026 à Bollwiller - Salle polyvalente, 36 rue de Lyon
+    <div id="countdown" class="countdown-timer"><h1>🕒 Le festival commence dans : Chargement... </h1></div>
+    <p></p>
+  </div>
+  <div class="button-right">
+    <a href="billeterie.html" class="button">🎟 Acheter des billets</a>
+  </div>
+</div>
+
+<header>
+    <div class="edition-switcher">
+      <label for="edition-select">Choisir une édition</label>
+      <select id="edition-select" onchange="window.location.href=this.value">
+        <option value="merchandising.html" selected>07/11/2026 — Édition actuelle</option>
+        <option value="archive/06_09_2025/index.html">06/09/2025 — Archives</option>
+      </select>
+    </div>
+    <button class="menu-button" onclick="toggleMenu()">☰ Menu</button>
+    <div id="dropdown-menu" class="dropdown-menu hidden">
+      <a href="index.html">Accueil</a>
+      <a href="groupes.html">Groupes et programmation</a>
+      <a href="billeterie.html">Billetterie</a>
+      <a href="merchandising.html">Merchandising et Restauration</a>
+      <a href="plan.html">Plan du festival et Accès</a>
+      <a href="infos.html">Infos utiles et contact</a>
+    </div>
+</header>
+
+<main class="container">
+  <section class="section">
+    <h2>🤘 MERCH OFFICIEL BOLL’TRACK HIVERNAL 🤘</h2>
+    <p>Envie de repartir avec un souvenir du festival ? 🔥 Le merch officiel du Boll’Track Hivernal sera disponible sur place !</p>
+
+    <p>👕 <strong>T-shirt officiel : 25 €</strong><br>100 % coton • Impression en quadrichromie</p>
+
+    <p>🧢 <strong>Bonnet officiel : 20 €</strong><br>Logo brodé • Finition de qualité</p>
+
+    <p>🧥 <strong>Sweat zippé officiel : 65 €</strong><br>100 % coton • Impression en quadrichromie</p>
+
+    <p><strong>⚠️ Quantités et tailles limitées sur place !</strong></p>
+
+    <p>💡 Plusieurs packs en prévente sont disponibles directement sur <a href="billeterie.html">cette billetterie</a> et vous permettent de réserver votre merch à l'avance tout en profitant de tarifs plus avantageux.</p>
+
+    <p>Alors si vous voulez être bien sapé pour affronter l'hiver façon Boll’Track… vous savez ce qu'il vous reste à faire ! 😎🤘🔥</p>
+  </section>
+
+  <section class="section">
+    <h2>🍔 Restauration</h2>
+    <p>À venir</p>
+  </section>
+</main>
+
+<footer>&copy; 2026 Festival Boll Track — Tous droits réservés</footer>
+<script>
+function toggleMenu() {
+  const menu = document.getElementById("dropdown-menu");
+  const button = document.querySelector(".menu-button");
+  menu.classList.toggle("hidden");
+  button.setAttribute("aria-expanded", String(!menu.classList.contains("hidden")));
+}
+const countdown = () => {
+  const targetDate = new Date("2026-11-07T16:00:00+01:00").getTime(); // Tu peux adapter l'heure
+  const now = new Date().getTime();
+  const difference = targetDate - now;
+
+  if (difference <= 0) {
+    document.getElementById("countdown").innerHTML = "Le festival a commencé !";
+    return;
+  }
+
+  const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+  document.getElementById("countdown").innerHTML =
+    `${days} jours ${hours} heures ${minutes} minutes ${seconds} secondes`;
+};
+
+setInterval(countdown, 1000);
+countdown(); // lancement immédiat
+</script>
+</body>
+</html>

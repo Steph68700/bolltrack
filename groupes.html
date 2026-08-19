@@ -1,297 +1,227 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Groupes - Boll Track Festival</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Programmation 2026 — Boll Track Festival</title>
+  <meta name="description" content="Découvrez la programmation du Boll Track Festival 2026 à Bollwiller : Omen Haze, GentleMaad!, Drownside, Dislocate, What's Up DOC, Spit Your Hate et Die For Apollo.">
+  <meta name="keywords" content="Boll Track, festival, programmation, rock, metal, Bollwiller, concerts, Alsace, 2026">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="Boll Track Festival">
+  <meta property="og:title" content="Programmation 2026 — Boll Track Festival">
+  <meta property="og:description" content="Sept groupes se succéderont le samedi 7 novembre 2026 à Bollwiller. Horaires détaillés à venir.">
+  <meta property="og:image" content="https://www.bolltrack.fr/Fond.jpg">
+  <meta property="og:url" content="https://www.bolltrack.fr/groupes.html">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Programmation 2026 — Boll Track Festival">
+  <meta name="twitter:description" content="Découvrez les sept groupes du Boll Track Festival 2026.">
+  <meta name="twitter:image" content="https://www.bolltrack.fr/Fond.jpg">
   <link rel="stylesheet" href="style.css">
+  <style>
+    .groupe-logo {
+      width: 280px;
+      max-width: 100%;
+      height: auto;
+      aspect-ratio: auto;
+    }
+
+    .lineup-scroll .timeline-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 110px;
+    }
+
+    .lineup-scroll .band {
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
 <div class="top-top-bar">
   <div class="top-left">
-    <a href="https://www.facebook.com/profile.php?id=61576657292655" target="_blank">Facebook ||</a>
-    <a href="https://www.instagram.com/bolltrack/" target="_blank">Instagram</a>
+    <a href="https://www.facebook.com/profile.php?id=61576657292655">Facebook ||</a>
+    <a href="https://www.instagram.com/bolltrack/">Instagram</a>
   </div>
   <div class="top-center">
-    <h1>Boll Track Festival</h1> 
-		      06 septembre 2025 à Bollwiller - 103 avenue du château
-		<div id="countdown" class="countdown-timer"><h1>🕒 Le festival commence dans : Chargement... </h1></div>
-		<p></p>
+    <h1><a href="index.html" class="site-title">Boll Track Festival</a></h1>
+              07 novembre 2026 à Bollwiller - Salle polyvalente, 36 rue de Lyon
+    <div id="countdown" class="countdown-timer"><h1>🕒 Le festival commence dans : Chargement... </h1></div>
+    <p></p>
   </div>
   <div class="button-right">
-    <a href="https://www.helloasso.com/associations/omen-haze/evenements/boll-track-festival-1" target="_blank" class="button">🎟 Acheter des billets</a>
+    <a href="billeterie.html" class="button">🎟 Acheter des billets</a>
   </div>
 </div>
 
 <header>
-
+    <div class="edition-switcher">
+      <label for="edition-select">Choisir une édition</label>
+      <select id="edition-select" onchange="window.location.href=this.value">
+        <option value="groupes.html" selected>07/11/2026 — Édition actuelle</option>
+        <option value="archive/06_09_2025/groupes.html">06/09/2025 — Archives</option>
+      </select>
+    </div>
     <button class="menu-button" onclick="toggleMenu()">☰ Menu</button>
     <div id="dropdown-menu" class="dropdown-menu hidden">
-	  <a href="index.html">Accueil</a>
+      <a href="index.html">Accueil</a>
       <a href="groupes.html">Groupes et programmation</a>
-	  <a href="billeterie.html">Billeterie et Restauration</a>
+      <a href="billeterie.html">Billetterie</a>
+      <a href="merchandising.html">Merchandising et Restauration</a>
       <a href="plan.html">Plan du festival et Accès</a>
-	  <a href="infos.html">Infos utiles et contact</a>
+      <a href="infos.html">Infos utiles et contact</a>
     </div>
 </header>
 
-<div class="container">
-
-<div class="section">
-  <h2>🕒 Planning horaire</h2>
-  <div class="timeline-horizontal">
-    <div class="timeline-item">
-      <span class="time">16H</span>
-      <div class="band">Acevölts</div>
+<main class="container">
+  <section class="section">
+    <h2>🎸 Line-up</h2>
+    <div class="timeline-horizontal lineup-scroll" aria-label="Ordre de passage des groupes">
+      <div class="timeline-item"><div class="band">Omen Haze</div></div>
+      <div class="timeline-item"><div class="band">GentleMaad!</div></div>
+      <div class="timeline-item"><div class="band">Drownside</div></div>
+      <div class="timeline-item"><div class="band">Dislocate</div></div>
+      <div class="timeline-item"><div class="band">What's Up DOC</div></div>
+      <div class="timeline-item"><div class="band">Spit Your Hate</div></div>
+      <div class="timeline-item"><div class="band">Die For Apollo</div></div>
     </div>
-    <div class="timeline-item">
-      <span class="time">17H</span>
-      <div class="band">Furtive</div>
-    </div>
-    <div class="timeline-item">
-      <span class="time">18H</span>
-      <div class="band">Omen Haze</div>
-    </div>
-    <div class="timeline-item">
-      <span class="time">19H15</span>
-      <div class="band">Seum 68</div>
-    </div>
-    <div class="timeline-item">
-      <span class="time">20H25</span>
-      <div class="band">Daria Arkova</div>
-    </div>
-    <div class="timeline-item">
-      <span class="time">21H35</span>
-      <div class="band">Alita</div>
-    </div>
-    <div class="timeline-item">
-      <span class="time">22H35</span>
-      <div class="band">Antechaos</div>
-    </div>
-    <div class="timeline-item">
-      <span class="time">23H45</span>
-      <div class="band">Syr Daria</div>
-    </div>
-  </div>
-</div>
+    <p><strong>Les horaires de passage seront communiqués prochainement.</strong></p>
+  </section>
 
+  <section class="section" aria-labelledby="groupes-title">
+    <h2 id="groupes-title">🔥 Les groupes</h2>
 
+    <article class="groupe-section">
+      <img src="logo/Die_For_Apollo.jpg" alt="Die For Apollo au Boll Track Festival 2026" class="groupe-logo">
+      <h3>Die For Apollo</h3>
+      <div class="groupe-links">
+        <a href="https://www.facebook.com/dieforapollo/" target="_blank" rel="noopener noreferrer">Facebook</a>
+        <a href="https://www.instagram.com/dieforapollo/" target="_blank" rel="noopener noreferrer">Instagram</a>
+      </div>
+      <p class="groupe-description">Formé sur Belfort, Die For Apollo est né en 2021. S’affranchissant des barrières, le groupe mêle rage viscérale et envolées mélodiques, entre breakdowns lourds et refrains accrocheurs, le tout porté par 3 voix brisant la frontière du cri et du chant, aussi percutant que sensible. Leur musique est une catharsis en haute tension, où l’on sent l’urgence de dire, de hurler, de vibrer. Des guitares tranchantes, une section rythmique ultra-précise, des ambiances tantôt sombres tantôt lumineuses : Die For Apollo propose un son dense et nuancé, parfaitement calibré pour frapper les tripes sans jamais sacrifier l’émotion. Avec pour seuls mots d’ordre Partage, Puissance et Énergie, Die For Apollo est un groupe taillé pour la scène !</p>
+      <audio controls preload="metadata">
+        <source src="sons/Die_For_Apollo.mp3" type="audio/mpeg">
+        Votre navigateur ne supporte pas l’audio HTML5.
+      </audio>
+    </article>
 
+    <article class="groupe-section">
+      <img src="logo/Spit_your_Hate.jpg" alt="Spit Your Hate au Boll Track Festival 2026" class="groupe-logo">
+      <h3>Spit Your Hate</h3>
+      <div class="groupe-links">
+        <a href="https://www.facebook.com/spityourhate/" target="_blank" rel="noopener noreferrer">Facebook</a>
+        <a href="https://www.instagram.com/spit.your.hate/" target="_blank" rel="noopener noreferrer">Instagram</a>
+      </div>
+      <p class="groupe-description">Depuis 2010, Spit Your Hate explose les scènes avec un son brut, sauvage et sans compromis. Fusionnant la vélocité tranchante du Thrash, la lourdeur écrasante du Death, le groove tribal de rythmiques primitives et une pincée de chaos puisée dans le Grind, le groupe façonne un mur sonore viscéral, taillé pour faire trembler les fondations. Sur scène, c’est un raz-de-marée. Brutal. Tribal. Authentique. Chaque riff, chaque frappe, chaque hurlement réveille les instincts les plus profonds. L’impact, l’énergie animale et l’engagement total ne sont pas une option quand Spit Your Hate monte sur scène : c’est votre âme primitive qui reprend le contrôle.</p>
+      <audio controls preload="metadata">
+        <source src="sons/Spit_Your_Hate.mp3" type="audio/mpeg">
+        Votre navigateur ne supporte pas l’audio HTML5.
+      </audio>
+    </article>
 
-  <div class="section">
-    <h2>🎸 Groupes Participants</h2>
-    <p>Découvrez les groupes qui feront vibrer la scène du Boll Track Festival :</p>
+    <article class="groupe-section">
+      <img src="logo/Whats_Up_Doc.jpg" alt="What's Up DOC au Boll Track Festival 2026" class="groupe-logo">
+      <h3>What's Up DOC</h3>
+      <div class="groupe-links">
+        <a href="https://www.facebook.com/whatsupdoc.musicband/" target="_blank" rel="noopener noreferrer">Facebook</a>
+        <a href="https://www.instagram.com/whatsupdoc.musicband/" target="_blank" rel="noopener noreferrer">Instagram</a>
+      </div>
+      <p class="groupe-description">Imaginez la puissance de Last Train et la poésie de Florence + the Machine. C'est une invitation à prendre la place du « DOC » le temps de quelques chansons, en entrant dans le monde imaginaire d’Anaelle, la chanteuse. Son univers enchanté atteint son paroxysme à chaque concert, avec des textes gorgés d’émotions exacerbées et une atmosphère frénétique. Porté par Romain à la basse, Christophe à la batterie et Maxime à la guitare, leur rock élégant conjugue brutalité et finesse afin de s’immerger pleinement dans ce voyage initiatique. What's Up DOC promet l’exaltation des sentiments grâce à la fureur poétique de ses chansons.</p>
+      <audio controls preload="metadata">
+        <source src="sons/Whats_Up_DOC.mp3" type="audio/mpeg">
+        Votre navigateur ne supporte pas l’audio HTML5.
+      </audio>
+    </article>
 
-    <div class="group-lineup">
-      <strong>Line-up :</strong><br>
-      Syr Daria · Antechaos · Alita · Daria Arkova · Seum 68 · Omen Haze · Furtive · Acevölt
-    </div>
-  </div>
+    <article class="groupe-section">
+      <img src="logo/Dislocate.jpg" alt="Dislocate au Boll Track Festival 2026" class="groupe-logo">
+      <h3>Dislocate</h3>
+      <div class="groupe-links">
+        <a href="https://www.facebook.com/dislocatefr" target="_blank" rel="noopener noreferrer">Facebook</a>
+        <a href="https://www.instagram.com/dislocate_off/" target="_blank" rel="noopener noreferrer">Instagram</a>
+      </div>
+      <p class="groupe-description">Émergeant des ombres de Ruelisheim, DISLOCATE met à profit une décennie d'expérience pour infuser les pulsations du thrash et du death metal le plus sombre. Récemment renforcé par l'arrivée de Pascal (ex-Obscure, ex-Trigger) derrière les fûts, le groupe insuffle un nouveau souffle à sa rage avec une impatience féroce. Forts de ce parcours forgé dans l'exigence, les quatre membres unissent leurs forces pour façonner une matière sonore abrasive. À chaque apparition scénique, leur musique s'abat comme un voile funèbre et étouffant : une tempête ténébreuse et implacable où l'énergie brute se fait le miroir des abysses.</p>
+      <audio controls preload="metadata">
+        <source src="sons/Dislocate.mp3" type="audio/mpeg">
+        Votre navigateur ne supporte pas l’audio HTML5.
+      </audio>
+    </article>
 
-  <!-- Exemple de présentation d’un groupe -->
-<div class="groupe-section">
-  <img src="logo/syrdaria.png" alt="Logo Syr Daria" class="groupe-logo">
+    <article class="groupe-section">
+      <img src="logo/Drownside.jpg" alt="Drownside au Boll Track Festival 2026" class="groupe-logo">
+      <h3>Drownside</h3>
+      <div class="groupe-links">
+        <a href="https://www.instagram.com/drownside.bnd/" target="_blank" rel="noopener noreferrer">Instagram</a>
+      </div>
+      <p class="groupe-description">Fondé il y a tout juste un an entre Colmar et Strasbourg, Drownside s’impose déjà comme une formation metalcore à suivre de près. Le quintet, composé de musiciens issus de la scène locale, puise son inspiration chez Bleed From Within, Parkway Drive, Fit For A King ou encore LANDMVRKS, avec une ambition claire : allier intensité, émotion, technique et présence scénique.</p>
+      <p class="media-note">Extrait audio prochainement.</p>
+    </article>
 
-  <h3>Syr Daria</h3>
+    <article class="groupe-section">
+      <img src="logo/GentleMadd.jpg" alt="GentleMaad! au Boll Track Festival 2026" class="groupe-logo">
+      <h3>GentleMaad!</h3>
+      <div class="groupe-links">
+        <a href="https://www.facebook.com/100089099007196/" target="_blank" rel="noopener noreferrer">Facebook</a>
+        <a href="https://www.instagram.com/gentle_maad/" target="_blank" rel="noopener noreferrer">Instagram</a>
+      </div>
+      <p class="groupe-description">Puissant et mélodique, GentleMaad! propose un Hard Rock ancré dans l’âge d’or des années 80. Mêlant des influences AOR, Glam et Heavy Metal, le groupe assène riffs accrocheurs et mélodies envoûtantes dans un esprit old school indéniable. Formé en 2021, après une première démo sortie en 2023, GentleMaad! dévoile son premier clip vidéo début 2025, suivi de son premier album en décembre de la même année.</p>
+      <audio controls preload="metadata">
+        <source src="sons/GentleMaad.mp3" type="audio/mpeg">
+        Votre navigateur ne supporte pas l’audio HTML5.
+      </audio>
+    </article>
 
-  <div class="groupe-links">
-    <a href="https://www.facebook.com/Syrdaria.official.fanpage" target="_blank">Facebook</a>
-    <a href="https://www.instagram.com/syr_daria_band/" target="_blank">Instagram</a>
-  </div>
-
-
-  <p class="groupe-description">
-     Formé en 2007 dans les brumes industrielles de Mulhouse, SYR DARIA fusionne métal tranchant et imagerie sombre, guidé par la figure inquiétante de Grippe Sou, leur clown mascotte. Du groove au thrash, le groupe multiplie les ambiances et enchaîne les albums marquants (Circus of Life, Voices, Tears of a Clown). Avec une présence scénique explosive et des dates aux côtés de Scorpions, Tankard ou Absolva,  
-  </p>
-
-  <audio controls>
-    <source src="sons/syrdaria.mp3" type="audio/mpeg">
-    Votre navigateur ne supporte pas l’audio HTML5.
-  </audio>
-</div>
-
-
-<div class="groupe-section">
-  <img src="logo/antechaos.jpg" alt="antechaos" class="groupe-logo">
-
-  <h3>Antechaos</h3>
-
-  <div class="groupe-links">
-    <a href="https://www.facebook.com/Antechaos" target="_blank">Facebook</a>
-    <a href="https://www.instagram.com/antechaos/" target="_blank">Instagram</a>
-  </div>
-
-
-  <p class="groupe-description">
-    Né en 2020, ANTECHAOS incarne le renouveau du hard rock français : engagé, moderne, explosif. Leur premier album Apocalypse (2022) les propulse immédiatement sur le devant de la scène, aux côtés de Dagoba, Sidilarsen ou Black Bomb A. En 2024, Dystopies confirme leur puissance avec des titres affûtés, des textes tranchants et des invités de prestige.
-  </p>
-
-  <audio controls>
-    <source src="sons/antechaos.mp3" type="audio/mpeg">
-    Votre navigateur ne supporte pas l’audio HTML5.
-  </audio>
-</div>
-
-<div class="groupe-section">
-  <img src="logo/alita.jpg" alt="alita" class="groupe-logo">
-
-  <h3>Alita</h3>
-
-  <div class="groupe-links">
-    <a href="https://www.facebook.com/profile.php?id=61569401014378&locale=fr_FR" target="_blank">Facebook</a>
-    <a href="https://www.instagram.com/alita.band.fr/" target="_blank">Instagram</a>
-  </div>
-
-
-  <p class="groupe-description">
-Né en Alsace, ALITA est un groupe à l’énergie brute, fusionnant métal, blues et rap dans un cocktail détonant. Fondé autour d’un noyau de musiciens expérimentés (Aurélien, Chris, Titouan, Dorian), le projet prend tout son sens avec l’arrivée de Lila, chanteuse à la voix puissante et habitée. En quelques concerts marquants, notamment au Noumatrouff et au Grillen, le groupe s’impose comme une révélation scénique. À suivre de très près.
-  </p>
-
-  <audio controls>
-    <source src="sons/alita.mp3" type="audio/mpeg">
-    Votre navigateur ne supporte pas l’audio HTML5.
-  </audio>
-</div>
-
-<div class="groupe-section">
-  <img src="logo/daria_arkova.png" alt="Logo Daria Arkova" class="groupe-logo">
-
-  <h3>Daria Arkova</h3>
-
-  <div class="groupe-links">
-    <a href="https://www.facebook.com/arkovadaria" target="_blank">Facebook</a>
-    <a href="https://www.instagram.com/daria.arkova/" target="_blank">Instagram</a>
-  </div>
-
-
-  <p class="groupe-description">
-  Avec un son entre dark rock et soft metal, Daria Arkova impose une signature à part : profonde, sombre, viscérale. Inspirée (mais jamais imitée) par des artistes comme Deftones ou Chelsea Wolfe, la formation a sorti ses deux premiers singles en 2024 (Bored, Breathe) et prépare un EP prometteur.
-  </p>
-
-  <audio controls>
-    <source src="sons/daria_arkova.mp3" type="audio/mpeg">
-    Votre navigateur ne supporte pas l’audio HTML5.
-  </audio>
-</div>
-
-<div class="groupe-section">
-  <img src="logo/seum68.jpg" alt="Logo Seum 68" class="groupe-logo">
-
-  <h3>Seum 68</h3>
-
-  <div class="groupe-links">
-    <a href="https://www.facebook.com/profile.php?id=61555388197407" target="_blank">Facebook</a>
-    <a href="https://www.instagram.com/seum6.8/" target="_blank">Instagram</a>
-  </div>
-
-
-  <p class="groupe-description">
-Né d’un coup de blues sur les pistes du Markstein et ressuscité autour d’une bière, SEUM68 transforme la frustration alsacienne en pur concentré de punk rock californien. Inspiré par Green Day, Blink-182 ou The Offspring, le groupe offre une musique survoltée, festive et sans filtre.
-  </p>
-
-</div>
-
-<div class="groupe-section">
-  <img src="logo/omen_haze.jpg" alt="Logo Omen Haze" class="groupe-logo">
-
-  <h3>Omen Haze</h3>
-
-  <div class="groupe-links">
-    <a href="https://www.facebook.com/profile.php?id=61556435486855" target="_blank">Facebook</a>
-    <a href="https://www.instagram.com/omen.haze/" target="_blank">Instagram</a>
-  </div>
-
-
-  <p class="groupe-description">
-Né à l’été 2023 dans l’Est de la France, OMEN HAZE propose un rock-metal hybride, intense et libéré des étiquettes. Porté par une formation soudée — deux guitaristes (Thomas & Andy), un batteur énergique (Jordan), un bassiste-growleur puissant (William) et une chanteuse charismatique (Dalila) — le groupe incarne une tension maîtrisée entre rage brute et émotions sombres.
-  </p>
-
-  <audio controls>
-    <source src="sons/omen_haze.wav" type="audio/mpeg">
-    Votre navigateur ne supporte pas l’audio HTML5.
-  </audio>
-</div>
-
-<div class="groupe-section">
-  <img src="logo/furtive.jpg" alt="Logo Furtive" class="groupe-logo">
-
-  <h3>Furtive</h3>
-
-  <div class="groupe-links">
-    <a href="https://www.facebook.com/profile.php?id=61568427281993&locale=fr_FR" target="_blank">Facebook</a>
-    <a href="https://www.instagram.com/furtiveband/" target="_blank">Instagram</a>
-  </div>
-
-
-  <p class="groupe-description">
-  Formé en 2023, FURTIVE unit quatre musiciens aux influences variées : Seb, Jeff, Jeffossi et Testos. Ensemble, ils façonnent un univers où la rage électrique des riffs côtoie la sensualité du groove et la puissance des émotions. Leur nom rend hommage au roman « Les Furtifs » d’Alain Damasio, dont ils reprennent la charge poétique et politique
-  </p>
-
-  <audio controls>
-    <source src="sons/furtive.mp3" type="audio/mpeg">
-    Votre navigateur ne supporte pas l’audio HTML5.
-  </audio>
-</div>
-
-<div class="groupe-section">
-  <img src="logo/acevolt.png" alt="Logo Acevolt" class="groupe-logo">
-
-  <h3>Acevölts</h3>
-
-  <div class="groupe-links">
-    <a href="https://www.facebook.com/profile.php?id=100037978455112" target="_blank">Facebook</a>
-    <a href="https://www.instagram.com/acevolts/" target="_blank">Instagram</a>
-  </div>
-
-
-  <p class="groupe-description">
- ACEVÖLTS débarque avec le feu sacré du hard rock à l’ancienne, dans la lignée d’AC/DC, Motörhead ou Airbourne. Fondé autour d’un son brut, rapide et sans compromis, le groupe électrise chaque scène où il passe. Ouvrant le tout premier Boll’Track Festival, ils promettent un set explosif et sans concessions, qui marquera les esprits. Une entrée en matière bruyante et brûlante.  
-  </p>
-
-  <audio controls>
-    <source src="sons/acevolts.mp3" type="audio/mpeg">
-    Votre navigateur ne supporte pas l’audio HTML5.
-  </audio>
-</div>
-
-  </div>
-
-  <!-- Tu peux continuer avec les autres groupes de la même manière -->
-</div>
+    <article class="groupe-section">
+      <img src="logo/Omen_Haze.jpg" alt="Omen Haze au Boll Track Festival 2026" class="groupe-logo">
+      <h3>Omen Haze</h3>
+      <div class="groupe-links">
+        <a href="https://www.facebook.com/profile.php?id=61556435486855" target="_blank" rel="noopener noreferrer">Facebook</a>
+        <a href="https://www.instagram.com/omen.haze/" target="_blank" rel="noopener noreferrer">Instagram</a>
+      </div>
+      <p class="groupe-description">Né à l’été 2023 dans l’Est de la France, OMEN HAZE propose un rock-metal hybride, intense et libéré des étiquettes. Porté par une formation soudée — deux guitaristes (Thomas & Andy), un batteur énergique (Jordan), un bassiste-growleur puissant (William) et une chanteuse charismatique (Dalila) — le groupe incarne une tension maîtrisée entre rage brute et émotions sombres.</p>
+      <audio controls preload="metadata">
+        <source src="sons/Omen_haze.wav" type="audio/wav">
+        Votre navigateur ne supporte pas l’audio HTML5.
+      </audio>
+    </article>
+  </section>
+</main>
 
 <footer>
-  &copy; 2025 Festival Boll Track - Tous droits réservés
+  &copy; 2026 Festival Boll Track — Tous droits réservés
 </footer>
 
 <script>
-  function toggleMenu() {
-    const menu = document.getElementById("dropdown-menu");
-    menu.classList.toggle("hidden");
+function toggleMenu() {
+  const menu = document.getElementById("dropdown-menu");
+  const button = document.querySelector(".menu-button");
+  menu.classList.toggle("hidden");
+  button.setAttribute("aria-expanded", String(!menu.classList.contains("hidden")));
+}
+
+const countdown = () => {
+  const targetDate = new Date("2026-11-07T16:00:00+01:00").getTime(); // Tu peux adapter l'heure
+  const now = new Date().getTime();
+  const difference = targetDate - now;
+
+  if (difference <= 0) {
+    document.getElementById("countdown").innerHTML = "Le festival a commencé !";
+    return;
   }
-</script>
 
-<script>
-  const countdown = () => {
-    const targetDate = new Date("September 6, 2025 15:30:00").getTime(); // Tu peux adapter l'heure
-    const now = new Date().getTime();
-    const difference = targetDate - now;
+  const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((difference % (1000 * 60)) / 1000);
 
-    if (difference <= 0) {
-      document.getElementById("countdown").innerHTML = "Le festival a commencé !";
-      return;
-    }
+  document.getElementById("countdown").innerHTML =
+    `${days} jours ${hours} heures ${minutes} minutes ${seconds} secondes`;
+};
 
-    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-
-    document.getElementById("countdown").innerHTML =
-      `${days} jours ${hours} heures ${minutes} minutes ${seconds} secondes`;
-  };
-
-  setInterval(countdown, 1000);
-  countdown(); // lancement immédiat
+setInterval(countdown, 1000);
+countdown(); // lancement immédiat
 </script>
 </body>
 </html>

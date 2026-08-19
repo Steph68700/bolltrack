@@ -1,146 +1,121 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Boll Track Festival</title>
-  <meta name="description" content="Boll Track est un festival de musique Rock/Metal organisé à Bollwiller le 6 septembre 2025. Découvrez la programmation complète, le plan et réservez vos billets.">
-  <meta name="keywords" content="Boll Track, festival, musique, rock, metal, Bollwiller, concerts, Alsace, scène, live, 2025">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Billetterie — Boll’Track Hivernal 2026</title>
+  <meta name="description" content="Réservez vos billets pour le Boll’Track Hivernal, le samedi 7 novembre 2026 à Bollwiller.">
+  <meta name="keywords" content="Boll Track Hivernal, billetterie, festival, rock, metal, Bollwiller, 2026">
   <meta name="robots" content="index, follow">
   <meta name="author" content="Boll Track Festival">
-  <meta property="og:title" content="Boll Track Festival 2025 - Événement rock/metal à Bollwiller">
-  <meta property="og:description" content="Rejoignez-nous pour une journée de musique rock/metal à Bollwiller avec Syr Daria, Antechaos, Alita et plus.">
-  <meta property="og:image" content="https://www.bolltrack.fr/images/cover.jpg">
-  <meta property="og:url" content="https://www.bolltrack.fr">
+  <meta property="og:title" content="Billetterie — Boll’Track Hivernal 2026">
+  <meta property="og:description" content="Réservez vos billets pour le samedi 7 novembre 2026 à Bollwiller.">
+  <meta property="og:image" content="https://www.bolltrack.fr/Fond.jpg">
+  <meta property="og:url" content="https://www.bolltrack.fr/billeterie.html">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Boll Track Festival 2025">
-  <meta name="twitter:description" content="Le 6 septembre 2025 à Bollwiller - Festival rock/metal avec groupes live et ambiance unique.">
-  <meta name="twitter:image" content="https://www.bolltrack.fr/images/cover.jpg">
+  <meta name="twitter:title" content="Billetterie — Boll’Track Hivernal 2026">
+  <meta name="twitter:description" content="Réservez vos billets pour le samedi 7 novembre 2026 à Bollwiller.">
+  <meta name="twitter:image" content="https://www.bolltrack.fr/Fond.jpg">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="top-top-bar">
   <div class="top-left">
-    <a href="https://www.facebook.com/profile.php?id=61576657292655" target="_blank">Facebook ||</a>
-    <a href="https://www.instagram.com/bolltrack/" target="_blank">Instagram</a>
+    <a href="https://www.facebook.com/profile.php?id=61576657292655">Facebook ||</a>
+    <a href="https://www.instagram.com/bolltrack/">Instagram</a>
   </div>
   <div class="top-center">
-    <h1>Boll Track Festival</h1> 
-		      06 septembre 2025 à Bollwiller - 103 avenue du château
-		<div id="countdown" class="countdown-timer"><h1>🕒 Le festival commence dans : Chargement... </h1></div>
-		<p></p>
+    <h1><a href="index.html" class="site-title">Boll Track Festival</a></h1>
+              07 novembre 2026 à Bollwiller - Salle polyvalente, 36 rue de Lyon
+    <div id="countdown" class="countdown-timer"><h1>🕒 Le festival commence dans : Chargement... </h1></div>
+    <p></p>
   </div>
   <div class="button-right">
-    <a href="https://www.helloasso.com/associations/omen-haze/evenements/boll-track-festival-1" target="_blank" class="button">🎟 Acheter des billets</a>
+    <a href="billeterie.html" class="button">🎟 Acheter des billets</a>
   </div>
 </div>
 
 <header>
-
+    <div class="edition-switcher">
+      <label for="edition-select">Choisir une édition</label>
+      <select id="edition-select" onchange="window.location.href=this.value">
+        <option value="billeterie.html" selected>07/11/2026 — Édition actuelle</option>
+        <option value="archive/06_09_2025/billeterie.html">06/09/2025 — Archives</option>
+      </select>
+    </div>
     <button class="menu-button" onclick="toggleMenu()">☰ Menu</button>
     <div id="dropdown-menu" class="dropdown-menu hidden">
-	  <a href="index.html">Accueil</a>
+      <a href="index.html">Accueil</a>
       <a href="groupes.html">Groupes et programmation</a>
-	  <a href="billeterie.html">Billeterie et Restauration</a>
+      <a href="billeterie.html">Billetterie</a>
+      <a href="merchandising.html">Merchandising et Restauration</a>
       <a href="plan.html">Plan du festival et Accès</a>
-	  <a href="infos.html">Infos utiles et contact</a>
+      <a href="infos.html">Infos utiles et contact</a>
     </div>
 </header>
 
+<main class="container">
+  <section class="section">
+    <h2>🎟 Billetterie — Boll’Track Hivernal 2026</h2>
+    <p><strong>Samedi 7 novembre 2026</strong></p>
+    <p><strong>103 avenue du Château, 68540 Bollwiller</strong></p>
+    <p>Réservez vos billets directement ci-dessous grâce à la billetterie HelloAsso.</p>
+    <p>
+      En achetant un billet ou un pack, vous reconnaissez avoir pris connaissance des
+      <a href="cgv.html">Conditions Générales de Vente du Boll’Track Hivernal 2026</a>.
+    </p>
+    <iframe
+      id="haWidget"
+      title="Billetterie HelloAsso du Boll’Track Hivernal 2026"
+      allowtransparency="true"
+      scrolling="auto"
+      src="https://www.helloasso.com/associations/omen-haze/evenements/boll-track-hivernal/widget"
+      style="width: 100%; height: 750px; border: none;"
+      onload="window.addEventListener('message', function(e) { const dataHeight = e.data.height; const haWidgetElement = document.getElementById('haWidget');
+        if (dataHeight > parseFloat(haWidgetElement.height || 0)) { haWidgetElement.height = dataHeight + 'px';}})">
+    </iframe>
+    <p class="helloasso-fallback">
+      Le formulaire ne s’affiche pas correctement ?
+      <a
+        href="https://www.helloasso.com/associations/omen-haze/evenements/boll-track-hivernal"
+        target="_blank"
+        rel="noopener noreferrer">
+        Ouvrir directement la billetterie sur HelloAsso
+      </a>
+    </p>
+  </section>
+</main>
 
-  <div class="container">
-  
-<div class="section">
-
-  <h2>🎫 Billetterie</h2>
- <table class="pricing-table">
-    <thead>
-      <tr>
-        <th>Offre</th>
-        <th>Prix</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Prévente<br><small>Sur place : 20€</small></td>
-        <td>15 €</td>
-      </tr>
-      <tr>
-        <td>Prévente + t-shirt</td>
-        <td>35 €</td>
-      </tr>
-      <tr>
-        <td>Prévente -12 ans<br><small>-6 ans : entrée gratuite</small></td>
-        <td>10 €</td>
-      </tr>
-      <tr>
-        <td>24 jetons</td>
-        <td>20 €</td>
-      </tr>
-      <tr>
-        <td><strong>Super pack</strong><br><small>30 jetons + t-shirt + entrée offerte</small></td>
-        <td>50 €</td>
-      </tr>
-    </tbody>
-  </table>
-  
-  <div class="section">
-  <h3>👕 T-shirt officiel : Disponible en prévente uniquemnent jusqu'au 16 aout 2025 </h3>
-  <p>Le t-shirt Exclusif du Boll Track Festival est disponible uniquement en <strong>prévente</strong> !</p>
-  <p>Lors de la commande un mail vous sera envoyé pour choissir votre taille</p>
-  <img src="tshirt.jpg" alt="T-shirt officiel du festival" class="tshirt-large">
-  <p style="margin-top: 10px;">
-    Disponible avec le pack <strong>Prévente + t-shirt</strong> à 35 €, ou inclus dans le <strong>Super pack</strong> à 50 € (entrée + t-shirt + 30 jetons).
-  </p>
-</div>
-
-  <h2>🍔 Restauration</h2>
-  <ul>
-     <li><strong>Boissons :</strong> Bière artisanale (Brasserie du Vallon), softs</li>
-    <li><strong>Repas :</strong> Barbecue, tartes flambées, options végétariennes</li>
-    <li><strong>Horaires :</strong> Service en continu</li>
-    <li><strong>Système de paiement :</strong> Paiement via jetons → <strong>1 € = 1 jeton</strong></li>
-    <li><strong>Extérieur :</strong> Boissons extérieures interdites</li>
-  </ul>
-</div>
-</div>
-
-
-  <footer>
-    &copy; 2025 Festival Boll Track - Tous droits réservés
-  </footer>
-  <script>
-  
+<footer>&copy; 2026 Festival Boll Track — Tous droits réservés</footer>
+<script>
 function toggleMenu() {
   const menu = document.getElementById("dropdown-menu");
+  const button = document.querySelector(".menu-button");
   menu.classList.toggle("hidden");
+  button.setAttribute("aria-expanded", String(!menu.classList.contains("hidden")));
 }
+const countdown = () => {
+  const targetDate = new Date("2026-11-07T16:00:00+01:00").getTime(); // Tu peux adapter l'heure
+  const now = new Date().getTime();
+  const difference = targetDate - now;
+
+  if (difference <= 0) {
+    document.getElementById("countdown").innerHTML = "Le festival a commencé !";
+    return;
+  }
+
+  const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+  document.getElementById("countdown").innerHTML =
+    `${days} jours ${hours} heures ${minutes} minutes ${seconds} secondes`;
+};
+
+setInterval(countdown, 1000);
+countdown(); // lancement immédiat
 </script>
-
-<script>
-  const countdown = () => {
-    const targetDate = new Date("September 6, 2025 15:30:00").getTime(); // Tu peux adapter l'heure
-    const now = new Date().getTime();
-    const difference = targetDate - now;
-
-    if (difference <= 0) {
-      document.getElementById("countdown").innerHTML = "Le festival a commencé !";
-      return;
-    }
-
-    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-
-    document.getElementById("countdown").innerHTML =
-      `${days} jours ${hours} heures ${minutes} minutes ${seconds} secondes`;
-  };
-
-  setInterval(countdown, 1000);
-  countdown(); // lancement immédiat
-</script>
-
 </body>
 </html>

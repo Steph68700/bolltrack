@@ -27,10 +27,12 @@ body::before {
   background: #000;
   color: #ff4081;
   display: flex;
-  justify-content: CENTER;
+  justify-content: center;
   align-items: center;
   font-size: 0.9rem;
   flex-wrap: wrap;
+  gap: 12px;
+  padding: 8px 12px;
 }
 
 .top-left a {
@@ -55,6 +57,20 @@ body::before {
   flex: 1;
   text-align: center;
   font-weight: bold;
+  min-width: 280px;
+}
+
+.button-right {
+  text-align: right;
+}
+
+.status-badge {
+  display: inline-block;
+  background: #ff4081;
+  color: #fff;
+  padding: 9px 14px;
+  border-radius: 5px;
+  font-weight: bold;
 }
 
 /* HEADER */
@@ -62,6 +78,61 @@ header {
   background: #222;
   padding: 5px 5px 5px; /* ← Augmenté en haut et en bas */
   text-align: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.edition-switcher {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  min-width: 0;
+  margin: 3px 0;
+}
+
+.edition-switcher label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.edition-switcher select {
+  width: 280px;
+  max-width: 100%;
+  padding: 5px 30px 5px 9px;
+  border: 1px solid #ff4081;
+  border-radius: 4px;
+  background: #111;
+  color: #f1f1f1;
+  font: inherit;
+  cursor: pointer;
+}
+
+.edition-switcher select:hover,
+.edition-switcher select:focus {
+  border-color: #fff;
+  outline: 2px solid transparent;
+  box-shadow: 0 0 0 2px rgba(255, 64, 129, 0.35);
+}
+
+@media (max-width: 600px) {
+  .edition-switcher {
+    width: 100%;
+  }
+
+  .edition-switcher select {
+    width: calc((100vw - 100px) / 2);
+    min-width: 125px;
+    padding-right: 20px;
+    font-size: 0.8rem;
+  }
 }
 
 
@@ -91,6 +162,9 @@ header {
 
 
 .menu-button {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: center;
   font-size: 1.1rem;      /* Réduction de la taille du texte */
   padding: 4px 8px;       /* Réduction des marges internes */
   background: none;
@@ -117,13 +191,19 @@ header h1 {
   text-align: center;
   font-weight: bold;
   color: #fff;
-  white-space: nowrap;
+  white-space: normal;
   font-size: 0.95rem;
   padding: 2px 0;
 }
 
+.countdown-timer {
+  color: #ff4081;
+}
+
 /* Dropdown menu plus petit */
 .dropdown-menu {
+  grid-column: 1 / -1;
+  grid-row: 2;
   background: #222;
   border: 1px solid #ff4081;
   padding: 5px 10px;
@@ -169,6 +249,16 @@ h1 {
   margin-top: 0px;
 }
 
+.site-title {
+  color: inherit;
+  text-decoration: none;
+}
+
+.site-title:hover,
+.site-title:focus {
+  color: #fff;
+}
+
 h2 {
   border-bottom: 2px solid #ff4081;
   padding-bottom: 10px;
@@ -196,13 +286,16 @@ a.button {
 }
 
 .groupe-logo {
-  width: 150px;
-  height: 100px;
+  width: min(100%, 520px);
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
 }
 
 .groupe-description {
   margin: 15px 0;
   color: #ddd;
+  text-align: left;
 }
 
 .groupe-links a {
@@ -218,7 +311,27 @@ a.button {
 audio {
   margin-top: 10px;
   width: 100%;
-  max-width: 300px;
+  max-width: 520px;
+}
+
+.running-order {
+  max-width: 520px;
+  margin: 0 auto 20px;
+  padding-left: 0;
+  list-style-position: inside;
+}
+
+.running-order li {
+  margin: 8px 0;
+  padding: 10px 14px;
+  background: #1e1e1e;
+  border-left: 3px solid #ff4081;
+  border-radius: 4px;
+}
+
+.media-note,
+.notice {
+  color: #ffff99;
 }
 
 .timeline-horizontal {
@@ -293,6 +406,42 @@ img {
   max-width: 100%;
   border: 2px solid #ff4081;
   border-radius: 5px;
+}
+
+.gallery {
+  display: grid;
+  gap: 20px;
+}
+
+.gallery iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+}
+
+@media (max-width: 700px) {
+  .top-top-bar {
+    display: grid;
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .top-left,
+  .button-right {
+    text-align: center;
+  }
+
+  .top-center {
+    min-width: 0;
+  }
+
+  .container {
+    padding: 16px;
+  }
+
+  .groupe-section {
+    padding: 14px;
+  }
 }
 
 /* FOOTER */
