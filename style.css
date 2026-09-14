@@ -374,6 +374,27 @@ audio {
   box-shadow: 0 0 10px rgba(0,0,0,0.3);
 }
 
+.tshirt-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 18px 0 24px;
+}
+
+.tshirt-gallery img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+}
+
+@media (max-width: 520px) {
+  .tshirt-gallery {
+    gap: 8px;
+  }
+}
+
 
 /* LISTES ET TABLES */
 ul {
