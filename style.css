@@ -383,9 +383,11 @@ audio {
 
 .merch-product-image {
   display: block;
-  box-sizing: border-box;
-  width: min(100%, 440px);
+  width: calc((100% - 16px) / 2);
   height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: contain;
+  background: #fff;
   margin: 18px auto 24px;
 }
 
@@ -400,6 +402,10 @@ audio {
 @media (max-width: 520px) {
   .tshirt-gallery {
     gap: 8px;
+  }
+
+  .merch-product-image {
+    width: calc((100% - 8px) / 2);
   }
 }
 
