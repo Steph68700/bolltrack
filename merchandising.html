@@ -17,7 +17,7 @@
   <meta name="twitter:title" content="Merchandising et restauration — Boll’Track Hivernal 2026">
   <meta name="twitter:description" content="Le merchandising officiel du Boll’Track Hivernal sera disponible sur place.">
   <meta name="twitter:image" content="https://www.bolltrack.fr/Fond.jpg">
-  <link rel="stylesheet" href="style.css?v=bonnet-20260929-2">
+  <link rel="stylesheet" href="style.css?v=merch-zoom-20260929">
 </head>
 <body>
 <div class="top-top-bar">
@@ -63,13 +63,19 @@
     <p>👕 <strong>T-shirt officiel : 25 €</strong><br>100 % coton • Impression en quadrichromie</p>
 
     <div class="tshirt-gallery" aria-label="Photos du T-shirt officiel Boll’Track">
-      <img src="tshirt-bolltrack-1.jpg" alt="T-shirt officiel Boll’Track, première photo montrant l’avant et le dos" width="1536" height="1024" loading="lazy" decoding="async">
-      <img src="tshirt-bolltrack-2.jpg" alt="T-shirt officiel Boll’Track, seconde photo montrant l’avant et le dos" width="1536" height="1024" loading="lazy" decoding="async">
+      <a class="merch-image-link" href="tshirt-bolltrack-1.jpg" aria-label="Agrandir la première photo du T-shirt" aria-haspopup="dialog" title="Agrandir la photo">
+        <img src="tshirt-bolltrack-1.jpg" alt="T-shirt officiel Boll’Track, première photo montrant l’avant et le dos" width="1536" height="1024" loading="lazy" decoding="async">
+      </a>
+      <a class="merch-image-link" href="tshirt-bolltrack-2.jpg" aria-label="Agrandir la seconde photo du T-shirt" aria-haspopup="dialog" title="Agrandir la photo">
+        <img src="tshirt-bolltrack-2.jpg" alt="T-shirt officiel Boll’Track, seconde photo montrant l’avant et le dos" width="1536" height="1024" loading="lazy" decoding="async">
+      </a>
     </div>
 
     <p>🧢 <strong>Bonnet officiel : 20 €</strong><br>Logo brodé • Finition de qualité</p>
 
-    <img class="merch-product-image" src="bonnet-bolltrack-hivernal.png" alt="Bonnet noir Boll’Track Hivernal avec inscriptions blanches" width="1112" height="986" loading="lazy" decoding="async">
+    <a class="merch-image-link merch-product-link" href="bonnet-bolltrack-hivernal.png" aria-label="Agrandir la photo du bonnet" aria-haspopup="dialog" title="Agrandir la photo">
+      <img class="merch-product-image" src="bonnet-bolltrack-hivernal.png" alt="Bonnet noir Boll’Track Hivernal avec inscriptions blanches" width="1112" height="986" loading="lazy" decoding="async">
+    </a>
 
     <p>🧥 <strong>Sweat zippé officiel : 65 €</strong><br>100 % coton • Impression en quadrichromie</p>
 
@@ -87,6 +93,11 @@
 </main>
 
 <footer>&copy; 2026 Festival Boll Track — Tous droits réservés</footer>
+<dialog id="merch-lightbox" class="merch-lightbox" aria-label="Photo agrandie du merchandising Boll’Track">
+  <button class="merch-lightbox-close" type="button" aria-label="Fermer la photo agrandie" autofocus>×</button>
+  <img class="merch-lightbox-image" alt="">
+</dialog>
+<script src="merchandising.js?v=20260929"></script>
 <script>
 function toggleMenu() {
   const menu = document.getElementById("dropdown-menu");
