@@ -549,3 +549,6 @@ footer {
   background: #222;
   font-size: 0.9rem;
 }
+
+/* Programmation et partenaire restauration 2026 */
+.schedule-wrap{overflow-x:auto}.schedule-table{width:100%;border-collapse:collapse}.schedule-table th,.schedule-table td{padding:12px 15px;text-align:left}.schedule-table tbody tr:nth-child(odd){background:rgba(255,255,255,.035)}.schedule-table tbody tr:not(.schedule-interlude) td{font-weight:700}.schedule-interlude{opacity:.82}.schedule-table th:first-child{white-space:nowrap}.brasserie-partner{display:flex;gap:24px;align-items:center;flex-wrap:wrap;padding:22px;background:#1d1d1d;border:1px solid #555;border-radius:10px}.brasserie-partner>a{flex:0 0 175px}.brasserie-partner img{width:175px;max-width:100%;height:auto;object-fit:contain;border:0;background:#fff;padding:10px}.brasserie-partner>div{flex:1 1 250px}.brasserie-partner h3{margin-top:0}@media(max-width:560px){.brasserie-partner{justify-content:center;text-align:center}.brasserie-partner>a{flex-basis:100%}.schedule-table th,.schedule-table td{padding:9px}}
