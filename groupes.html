@@ -26,17 +26,11 @@
       aspect-ratio: auto;
     }
 
-    .lineup-scroll .timeline-item {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 110px;
-    }
+    .lineup-scroll .timeline-item { display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:260px; min-height:150px; }
 
-    .lineup-scroll .band {
-      font-size: 1.1rem;
-      font-weight: bold;
-    }
+    .lineup-scroll .band { font-size: 1.1rem; font-weight: 600; }
+    .lineup-scroll .time { font-size: 2rem; font-weight: 800; color: #ff4081; margin-bottom: 18px; }
+    .fb-note { color: #fff; text-align: center; margin: 20px 0 0; font-weight: 500; }
   </style>
   <link rel="canonical" href="https://www.bolltrack.fr/groupes.html">
 </head>
@@ -77,21 +71,20 @@
 </header>
 
 <main class="container">
-  <section class="section">
-    <h2>🎸 Line-up</h2>
-    <div class="timeline-horizontal lineup-scroll" aria-label="Ordre de passage des groupes">
-      <div class="timeline-item"><div class="band">Omen Haze</div></div>
-      <div class="timeline-item"><div class="band">GentleMaad!</div></div>
-      <div class="timeline-item"><div class="band">Drownside</div></div>
-      <div class="timeline-item"><div class="band">Dislocate</div></div>
-      <div class="timeline-item"><div class="band">What's Up DOC</div></div>
-      <div class="timeline-item"><div class="band">Spit Your Hate</div></div>
-      <div class="timeline-item"><div class="band">Die For Apollo</div></div>
+  <section class="section" aria-labelledby="planning-title">
+    <h2 id="planning-title">🕒 Planning horaire</h2>
+    <div class="timeline-horizontal lineup-scroll" aria-label="Heures de début des concerts">
+      <div class="timeline-item"><span class="time">16H20</span><div class="band">Omen Haze</div></div>
+      <div class="timeline-item"><span class="time">17H30</span><div class="band">GentleMaad!</div></div>
+      <div class="timeline-item"><span class="time">19H00</span><div class="band">Drownside</div></div>
+      <div class="timeline-item"><span class="time">20H30</span><div class="band">Dislocate</div></div>
+      <div class="timeline-item"><span class="time">22H00</span><div class="band">What&#39;s Up DOC</div></div>
+      <div class="timeline-item"><span class="time">23H30</span><div class="band">Spit Your Hate</div></div>
+      <div class="timeline-item"><span class="time">01H00</span><div class="band">Die For Apollo</div></div>
     </div>
-    <p><strong>Retrouvez les horaires détaillés de chaque concert ci-dessous.</strong></p>
+    <p class="fb-note">Entre les sets : FunkyBee (FB)</p>
   </section>
 
-<section class="section" aria-labelledby="horaires-title"><h2 id="horaires-title">🕒 Horaires des concerts — samedi 7 novembre 2026</h2><p>Programme de 16h00 à 3h00 le lendemain. « FB » reprend l’intitulé du planning communiqué.</p><div class="schedule-wrap"><table class="schedule-table"><thead><tr><th scope="col">Horaires</th><th scope="col">Programmation</th></tr></thead><tbody><tr class="schedule-interlude"><th scope="row">16h00–16h20</th><td>FB</td></tr><tr><th scope="row">16h20–17h00</th><td>Omen Haze</td></tr><tr class="schedule-interlude"><th scope="row">17h00–17h30</th><td>FB</td></tr><tr><th scope="row">17h30–18h30</th><td>GentleMaad!</td></tr><tr class="schedule-interlude"><th scope="row">18h30–19h00</th><td>FB</td></tr><tr><th scope="row">19h00–20h00</th><td>Drownside</td></tr><tr class="schedule-interlude"><th scope="row">20h00–20h30</th><td>FB</td></tr><tr><th scope="row">20h30–21h30</th><td>Dislocate</td></tr><tr class="schedule-interlude"><th scope="row">21h30–22h00</th><td>FB</td></tr><tr><th scope="row">22h00–23h00</th><td>What&#39;s Up DOC</td></tr><tr class="schedule-interlude"><th scope="row">23h00–23h30</th><td>FB</td></tr><tr><th scope="row">23h30–00h30</th><td>Spit Your Hate</td></tr><tr class="schedule-interlude"><th scope="row">00h30–01h00</th><td>Pause</td></tr><tr><th scope="row">01h00–02h00</th><td>Die For Apollo</td></tr><tr class="schedule-interlude"><th scope="row">02h00–03h00</th><td>FB</td></tr></tbody></table></div></section>
   <section class="section" aria-labelledby="groupes-title">
     <h2 id="groupes-title">🔥 Les groupes</h2>
 
