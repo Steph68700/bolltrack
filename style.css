@@ -555,3 +555,66 @@ footer {
 
 /* Carte restauration sans tarifs */
 .festival-menu-scroll{overflow-x:auto;margin:12px 0 28px}.festival-menu{width:100%;border-collapse:collapse;min-width:460px}.festival-menu th,.festival-menu td{padding:12px 15px;text-align:left;vertical-align:top;border-bottom:1px solid #444}.festival-menu thead th{background:#292929;color:#ff4081}.festival-menu tbody tr:nth-child(odd){background:rgba(255,255,255,.04)}.festival-menu tbody th{width:33%;font-weight:700}.festival-menu td{color:#eee}#restauration h3{margin:25px 0 8px}#restauration .brasserie-partner{margin-top:30px}
+
+
+/* Découverte Entreli dans la barre des réseaux sociaux */
+.top-top-bar .top-left {
+  display: flex;
+  flex: 0 0 100%;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.top-left .event-discovery {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 9px 16px;
+  border: 1px solid #ff4081;
+  border-radius: 8px;
+  background: #ff4081;
+  color: #111;
+  font-weight: 700;
+  line-height: 1.4;
+  text-decoration: none;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.event-discovery-caption {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.top-left .event-discovery:hover,
+.top-left .event-discovery:focus-visible {
+  background: #ff80ab;
+  border-color: #ff80ab;
+  color: #111;
+  text-decoration: none;
+}
+
+.top-left .event-discovery:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+@media (max-width: 700px) {
+  .top-top-bar .top-left {
+    justify-content: center;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .top-left .event-discovery {
+    flex-basis: 100%;
+    max-width: 310px;
+    align-items: center;
+    margin: 0 auto;
+  }
+}
