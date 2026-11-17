@@ -36,5 +36,20 @@ La bascule du domaine nécessite de remplacer les enregistrements DNS de
 l’ancien hébergement par les valeurs fournies par Railway. Conserver les
 autres enregistrements, en particulier ceux des emails.
 
+Service Railway : `bolltrack` (`6bf5da1e-c5d7-44e8-9196-77fcee9b438d`).
+Adresse provisoire vérifiée : `https://bolltrack-production.up.railway.app`.
+Le domaine `www.bolltrack.fr` est préparé sur ce service. Valeurs DNS obtenues
+le 17 novembre 2026 (la bascule n’a pas encore été effectuée) :
+
+| Type | Nom relatif | Valeur |
+| --- | --- | --- |
+| CNAME | `www` | `91lsbohx.up.railway.app` |
+| TXT | `_railway-verify.www` | `railway-verify=b6db04babce4c958090058188e8b57618cd4f0ddabfd0bb04c4f30cb716907a5` |
+
+Remplacer l’ancien CNAME `www` pointant vers `steph68700.github.io`, sans
+créer un deuxième CNAME au même nom. Attendre ensuite la validation du domaine
+et du certificat dans Railway avant de considérer la migration du domaine
+comme terminée.
+
 Les polices sont servies localement ; leurs licences OFL accompagnent les
 fichiers dans `assets/fonts/`.
