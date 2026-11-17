@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Le magasin du Fest — Boutique BollTrack & Omen Haze</title>
+  <meta name="description" content="Découvre le magasin du Fest : T-shirts, pulls, bonnet et casquette BollTrack, éditions 2025 et 2026, et T-shirt Omen Haze. Ouverture des commandes prochainement.">
+  <meta property="og:title" content="Le magasin du Fest — BollTrack">
+  <meta property="og:description" content="Le fest continue. Dans ton dressing. Découvre les collections BollTrack et Omen Haze.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://www.bolltrack.fr/tshirt-bolltrack-2.jpg">
+  <link rel="canonical" href="https://www.bolltrack.fr/boutique.html">
+  <link rel="icon" href="icon.jpg">
+  <link rel="preload" href="assets/fonts/barlow-condensed-extrabold.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="assets/fonts/manrope-regular.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="boutique.css?v=20261117">
+  <script src="boutique.js?v=20261117" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#collection">Aller aux articles</a>
+  <div class="opening-strip"><span class="status-dot" aria-hidden="true"></span> La boutique se prépare. <span>Commandes prochainement.</span></div>
+  <header class="shop-header">
+    <a class="shop-home" href="boutique.html" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 7h14l1 14H4L5 7Zm3 0V5a4 4 0 0 1 8 0v2"/></svg><span>Le magasin du Fest</span></a>
+    <a href="index.html" class="wordmark" aria-label="BollTrack Festival — Accueil"><span>Boll<svg class="wordmark-star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1v22M1 12h22M4 4l16 16M4 20 20 4"/></svg>Track</span><small>ROCK · METAL · BOLLWILLER</small></a>
+    <div class="header-actions">
+      <button class="icon-button account-button" id="account-open" type="button" aria-label="Mon compte Entreli"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/></svg><span>Mon compte</span></button>
+      <button class="icon-button cart-button" id="cart-open" type="button" aria-label="Ouvrir le panier d’aperçu, 0 article"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 7h14l1 14H4L5 7Zm3 0V5a4 4 0 0 1 8 0v2"/></svg><span class="cart-count" id="cart-count" aria-hidden="true">0</span></button>
+    </div>
+  </header>
+  <nav class="shop-nav" aria-label="Navigation de la boutique">
+    <a href="#collection" data-category-link="all">Toute la collection</a><a href="#collection" data-category-link="tshirts">T-shirts</a><a href="#collection" data-category-link="pulls">Pulls</a><a href="#collection" data-category-link="accessoires">Accessoires</a><a href="index.html" class="festival-return">Le festival <svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></a>
+  </nav>
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow"><span aria-hidden="true">✳</span> LE MAGASIN DU FEST</p>
+        <h1 id="hero-title">LE FEST<br>CONTINUE<span class="yellow-dot">.</span><br><span class="outline-title">DANS TON</span><br>DRESSING.</h1>
+        <p class="hero-description">Les riffs s’arrêtent. Le style reste.<br>Emporte un bout du BollTrack avec toi.</p>
+        <a class="primary-button" href="#collection">Découvrir la collection <svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 5 14 14M5 19h14V5"/></svg></a>
+      </div>
+      <div class="hero-art">
+        <div class="hero-edition">COLLECTION<br><strong>2026</strong></div>
+        <figure class="hero-photo"><img src="tshirt-bolltrack-2.jpg" alt="T-shirt BollTrack 2026 au motif violet, vu de face et de dos" width="1536" height="1024" fetchpriority="high"><figcaption><span>BOLLTRACK HIVERNAL</span><span>VIOLET / 2026</span></figcaption></figure>
+        <div class="hero-stamp" aria-hidden="true">DU SON.<br>DU STYLE.<br><span>DU BOLLTRACK.</span></div>
+        <p class="hero-footnote">POUR CEUX QUI FONT VIVRE LE FEST.</p>
+      </div>
+    </section>
+    <div class="collection-ticker" aria-hidden="true"><span>BOLLTRACK FESTIVAL</span><b>✳</b><span>DU MERCH. DES SOUVENIRS.</span><b>✳</b><span>OMEN HAZE</span><b>✳</b><span>BOLLTRACK FESTIVAL</span><b>✳</b><span>DU MERCH. DES SOUVENIRS.</span></div>
+    <section class="collection-section" id="collection" aria-labelledby="collection-title">
+      <div class="section-heading"><div><p class="eyebrow">À CHACUN SON FEST.</p><h2 id="collection-title">LA COLLECTION<span>.</span></h2></div><p>Éditions 2025 & 2026.<br>À porter bien après le dernier rappel.</p></div>
+      <div class="catalog-toolbar">
+        <div class="filter-group" role="group" aria-label="Filtrer les articles"><button class="filter-button active" type="button" data-filter="all" aria-pressed="true">Tout <span>8</span></button><button class="filter-button" type="button" data-filter="tshirts" aria-pressed="false">T-shirts <span>4</span></button><button class="filter-button" type="button" data-filter="pulls" aria-pressed="false">Pulls <span>2</span></button><button class="filter-button" type="button" data-filter="accessoires" aria-pressed="false">Accessoires <span>2</span></button></div>
+        <p id="results-count" class="results-count" role="status" aria-live="polite">8 articles</p>
+      </div>
+      <p class="catalog-note"><span aria-hidden="true">ⓘ</span> Aperçu de la collection · Prix, tailles et stocks à confirmer avant l’ouverture.</p>
+      <div class="product-grid" id="product-grid"></div>
+      <noscript><p>Active JavaScript pour consulter le catalogue interactif. La collection comprend les T-shirts Omen Haze, BollTrack 2025, BollTrack 2026 violet et jaune ; les pulls BollTrack 2026 violet et jaune ; le bonnet BollTrack Hivernal 2026 et la casquette BollTrack 2025.</p></noscript>
+    </section>
+    <section class="haze-section" aria-labelledby="haze-title"><div class="haze-visual"><img src="logo/Omen_Haze.jpg" alt="Visuel du groupe Omen Haze" width="600" height="600" loading="lazy"><span>LE GROUPE DERRIÈRE LE FEST.</span></div><div class="haze-copy"><p class="eyebrow">LA MÊME ÉNERGIE. UN AUTRE T-SHIRT.</p><h2 id="haze-title">OMEN HAZE.<br>DE LA SCÈNE<br>AU QUOTIDIEN.</h2><p>Le BollTrack, c’est aussi l’histoire d’Omen Haze. Retrouve le T-shirt du groupe dans la collection.</p><button class="text-button" type="button" data-product="omen-haze">Découvrir le T-shirt <svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></button></div></section>
+    <section class="shop-faq" aria-labelledby="faq-title"><div><p class="eyebrow">ON PRÉPARE LA SUITE.</p><h2 id="faq-title">AVANT <br>LE PROCHAIN <br>RAPPEL<span>.</span></h2></div><div class="faq-list"><details open><summary>Quand pourra-t-on commander ?<span aria-hidden="true">+</span></summary><p>La boutique est en préparation. Tu peux déjà découvrir les articles et composer un panier d’aperçu. Aucune commande ni réservation n’est transmise.</p></details><details><summary>Quelles tailles seront proposées ?<span aria-hidden="true">+</span></summary><p>Les tailles, les prix et les quantités seront renseignés avant l’ouverture des commandes.</p></details><details><summary>Comment récupérer ma commande ?<span aria-hidden="true">+</span></summary><p>Les modalités de retrait, de livraison et leurs tarifs seront précisés avant la mise en vente.</p></details><details><summary>À quoi servira mon compte Entreli ?<span aria-hidden="true">+</span></summary><p>La connexion Entreli est prévue pour retrouver tes commandes et tes factures. Elle n’est pas encore activée sur cette première version.</p></details></div></section>
+  </main>
+  <footer class="shop-footer"><div class="footer-main"><a class="wordmark" href="index.html"><span>Boll<svg class="wordmark-star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1v22M1 12h22M4 4l16 16M4 20 20 4"/></svg>Track</span><small>ON SE RETROUVE DEVANT LA SCÈNE.</small></a><div><a href="index.html">Le festival <svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></a><a href="infos.html">Infos & contact</a><a href="https://www.instagram.com/bolltrack/" target="_blank" rel="noopener noreferrer">Instagram <svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></a><a href="https://www.facebook.com/profile.php?id=61576657292655" target="_blank" rel="noopener noreferrer">Facebook <svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></a></div></div><div class="footer-bottom"><span>© 2026 BollTrack · Association Omen Haze</span><span>La boutique se prépare. Reste dans le riff.</span></div></footer>
+  <dialog id="product-dialog" class="product-dialog" aria-labelledby="detail-title"><button class="dialog-close" type="button" data-close aria-label="Fermer la fiche article">×</button><div id="product-detail"></div></dialog>
+  <dialog id="cart-dialog" class="cart-dialog" aria-labelledby="cart-title"><div class="cart-heading"><div><p class="eyebrow">POUR GARDER TES IDÉES.</p><h2 id="cart-title">TON PANIER<span>.</span></h2></div><button class="dialog-close" type="button" data-close aria-label="Fermer le panier">×</button></div><p class="preview-label">Panier d’aperçu · aucune commande transmise</p><div id="cart-items"></div><div class="cart-bottom"><p>Les prix et les tailles seront précisés à l’ouverture. Aucun paiement n’est proposé pour le moment.</p><button class="checkout-button" type="button" disabled>Commandes prochainement <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/></svg></button><button class="text-button" type="button" data-close>Continuer la découverte <svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></button></div></dialog>
+  <dialog id="account-dialog" class="account-dialog" aria-labelledby="account-title"><button class="dialog-close" type="button" data-close aria-label="Fermer la fenêtre du compte">×</button><span class="account-symbol" aria-hidden="true">↗</span><p class="eyebrow">TON COMPTE. TOUS TES SOUVENIRS.</p><h2 id="account-title">BOLLTRACK<br>RENCONTRE<br><span>ENTRELI.</span></h2><p>La connexion Entreli arrive bientôt pour retrouver tes commandes et tes factures au même endroit.</p><p class="preview-label">Connexion non activée sur cet aperçu.</p><button class="primary-button" type="button" data-close>Retour à la collection <svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></button></dialog>
+  <div class="toast" id="shop-toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
