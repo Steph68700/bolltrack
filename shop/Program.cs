@@ -114,21 +114,7 @@ async Task Login(HttpContext ctx,bool register)
         && auth.Host==authority.Host)
         ctx.Response.Headers.Location=QueryHelpers.AddQueryString(new Uri(authority,"/Account/Register").AbsoluteUri,"returnUrl",auth.PathAndQuery);
 }
-app.MapGet("/api/compte",async (HttpContext ctx,ShopDb db,CancellationToken ct)=>{
-    if (ctx.User.FindFirstValue("sub") is not {} owner)
-        return Results.Ok(new{connected=false});
-    var list=await db.Orders.AsNoTracking().Where(o=>o.Owner==owner).OrderByDescending(o=>o.CreatedUtc).Take(100)
-        .Include(o=>o.Lines).ToListAsync(ct);
-    var ids=list.Select(o=>o.Id).ToArray();
-    var shippingNumbers=ids.Length==0 ? new Dictionary<string,string?>() : await db.Shipments.AsNoTracking().Where(s=>s.Status=="ready" && ids.Contains(s.OrderId))
-        .ToDictionaryAsync(s=>s.OrderId,s=>s.TrackingNumber,ct);
-    return Results.Ok(new{connected=true,name=ctx.User.FindFirstValue("name"),email=ctx.User.FindFirstValue("email"),
-        profileUrl=new Uri(authority,"/Account/Profile").AbsoluteUri,
-        orders=list.Select(o=>new{o.Id,o.Status,o.CreatedUtc,o.TotalCents,o.ShippingCents,o.ReceiptUrl,trackingNumber=shippingNumbers.GetValueOrDefault(o.Id),
-            checkoutUrl=o.Status=="pending" && o.ExpiresUtc>DateTime.UtcNow ? o.CheckoutUrl : null,
-            delivery=JsonSerializer.Deserialize<ShippingDetails>(o.DeliveryJson),
-            lines=o.Lines.Select(l=>new{l.Name,l.SizeCode,l.Quantity,l.PriceCents})})});
-});
+app.MapCustomerAccount();
 app.MapPost("/api/deconnexion",async(HttpContext ctx)=>{
     await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);return Results.NoContent();
 });
@@ -151,13 +137,18 @@ app.MapPost("/api/commandes/{id}/{action}",async(string id,string action,HttpCon
 app.MapPost("/api/stripe/webhook", async (HttpContext ctx,Payments pay,CancellationToken ct)=>{
     var secret=config["Stripe:WebhookSecret"];
     if(string.IsNullOrWhiteSpace(secret)) return Results.StatusCode(503);
-    ctx.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>()!.MaxRequestBodySize=1024*1024;
+    if (ctx.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>() is { IsReadOnly: false } limit)
+        limit.MaxRequestBodySize=1024*1024;
     var payload=await new StreamReader(ctx.Request.Body).ReadToEndAsync(ct);
     Event evt;
     try {evt=EventUtility.ConstructEvent(payload,ctx.Request.Headers["Stripe-Signature"],secret,throwOnApiVersionMismatch:false);}
     catch(StripeException){return Results.BadRequest();}
     if(evt.Type is "checkout.session.completed" or "checkout.session.expired" && evt.Data.Object is Session session)
         await pay.Apply(session,ct);
+    else if (evt.Type == "charge.refunded" && evt.Data.Object is Charge charge)
+        await pay.RefreshRefund(charge.PaymentIntentId,ct,charge.Metadata?.GetValueOrDefault("bolltrack_order"));
+    else if (evt.Type is "refund.updated" or "refund.failed" && evt.Data.Object is Refund refund)
+        await pay.RefreshRefund(refund.PaymentIntentId,ct);
     return Results.Ok();
 });
 app.Run();

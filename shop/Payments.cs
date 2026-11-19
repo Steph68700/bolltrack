@@ -14,7 +14,7 @@ public record Checkout(string RequestId, List<CartItem> Items, Delivery Delivery
 public class Payments(ShopDb db, Shipping shipping, IConfiguration config, SessionService? sessions = null)
 {
     public bool Enabled => !string.IsNullOrWhiteSpace(config["Stripe:SecretKey"])
-        && !string.IsNullOrWhiteSpace(config["Stripe:WebhookSecret"]) && shipping.Methods().Count > 0;
+        && !string.IsNullOrWhiteSpace(config["Stripe:WebhookSecret"]) && shipping.Methods().Any(m => m.Available);
     private SessionService Sessions => sessions ?? throw new ShopProblem(503, "Stripe est indisponible.");
 
     public async Task<string> Create(string owner, string email, Checkout cart, CancellationToken ct)
@@ -30,7 +30,7 @@ public class Payments(ShopDb db, Shipping shipping, IConfiguration config, Sessi
         var fingerprint = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new { items, cart.Delivery })));
         var existing = await db.Orders.Include(o => o.Lines).SingleOrDefaultAsync(o => o.Id == cart.RequestId, ct);
         if (existing != null) return await Resume(existing, owner, fingerprint, ct);
-        var method = shipping.Methods().Find(m => m.Id == cart.Delivery.Mode)
+        var method = shipping.Methods().Find(m => m.Id == cart.Delivery.Mode && m.Available)
             ?? throw new ShopProblem(400, "Ce mode de livraison est indisponible.");
         var delivery = await shipping.Validate(cart.Delivery, ct);
         var order = new ShopOrder { Id=cart.RequestId, Owner=owner, Email=email, CreatedUtc=DateTime.UtcNow,
@@ -74,12 +74,22 @@ public class Payments(ShopDb db, Shipping shipping, IConfiguration config, Sessi
         var delivery = JsonSerializer.Deserialize<ShippingDetails>(order.DeliveryJson)!;
         var lines = order.Lines.OrderBy(l => l.ProductId, StringComparer.Ordinal).ThenBy(l => l.SizeCode, StringComparer.Ordinal)
             .Select(l => Line(l.Name + " · " + l.SizeCode, l.Quantity, l.PriceCents)).ToList();
-        if (order.ShippingCents > 0)
-            lines.Add(Line(delivery.Locker == null ? "Mondial Relay à domicile" : "Mondial Relay en Locker", 1, order.ShippingCents));
+        var shippingName = delivery.Locker == null ? "Mondial Relay à domicile" : "Mondial Relay en Locker";
         var options = new SessionCreateOptions {
             Mode="payment", Locale="fr", PaymentMethodTypes=["card"], CustomerEmail=order.Email,
-            ClientReferenceId=order.Id, Metadata=new(){["bolltrack_order"]=order.Id}, LineItems=lines,
-            ExpiresAt=order.ExpiresUtc, InvoiceCreation=new() { Enabled=true },
+            ClientReferenceId=order.Id, Metadata=new(){["bolltrack_order"]=order.Id, ["pricing"]="shipping_rate_v1"}, LineItems=lines,
+            AllowPromotionCodes=true, AdaptivePricing=new() { Enabled=false },
+            ShippingOptions=[new() { ShippingRateData=new() { Type="fixed_amount", DisplayName=shippingName,
+                FixedAmount=new() { Amount=order.ShippingCents, Currency="eur" } } }],
+            PaymentIntentData=new() { Metadata=new() { ["bolltrack_order"]=order.Id }, Shipping=new() {
+                Name=delivery.Recipient.Name, Phone=delivery.Recipient.Phone, Address=new() {
+                    Line1=delivery.Locker?.Street ?? delivery.Recipient.Street,
+                    Line2=delivery.Locker == null ? delivery.Recipient.Complement : delivery.Locker.Name,
+                    PostalCode=delivery.Locker?.Postcode ?? delivery.Recipient.Postcode,
+                    City=delivery.Locker?.City ?? delivery.Recipient.City, Country=delivery.Country } } },
+            ExpiresAt=order.ExpiresUtc, InvoiceCreation=new() { Enabled=true, InvoiceData=new() {
+                Description="Commande BollTrack " + order.Id[..12].ToUpperInvariant(),
+                Metadata=new() { ["bolltrack_order"]=order.Id } } },
             SuccessUrl=origin + "/boutique.html?commande=" + order.Id + "#compte",
             CancelUrl=origin + "/boutique.html#panier"
         };
@@ -110,13 +120,46 @@ public class Payments(ShopDb db, Shipping shipping, IConfiguration config, Sessi
         var order = await db.Orders.AsNoTracking().SingleOrDefaultAsync(o => o.Id == id, ct);
         if (order == null || (order.StripeSessionId != null && order.StripeSessionId != session.Id)) return;
         if (session.Status == "expired") { await Release(id, session.Id, ct); return; }
-        if (session.Status != "complete" || session.PaymentStatus != "paid") return;
-        if (session.Currency != "eur" || session.AmountTotal != order.TotalCents)
-            throw new InvalidOperationException("Montant Stripe incohérent.");
-        var receipt = session.Invoice?.HostedInvoiceUrl ?? session.PaymentIntent?.LatestCharge?.ReceiptUrl;
-        await db.Orders.Where(o=>o.Id==id && (o.Status=="pending" || o.Status=="paid"))
+        if (session.Status != "complete" || (session.PaymentStatus != "paid"
+            && !(session.PaymentStatus == "no_payment_required" && session.AmountTotal == 0))) return;
+        var discount = session.TotalDetails?.AmountDiscount ?? 0;
+        var goods = order.TotalCents - order.ShippingCents;
+        var valid = session.Currency == "eur" && session.AmountTotal == order.TotalCents - discount;
+        if (session.Metadata.GetValueOrDefault("pricing") == "shipping_rate_v1")
+            valid &= session.AmountSubtotal == goods && session.TotalDetails?.AmountShipping == order.ShippingCents
+                && session.TotalDetails.AmountTax == 0 && discount >= 0 && discount <= goods;
+        else
+            valid &= discount == 0; // Sessions émises avant la prise en charge des codes promo.
+        if (!valid) throw new InvalidOperationException("Montant Stripe incohérent.");
+
+        var paid = checked((int)session.AmountTotal!.Value);
+        var invoice = session.Invoice?.HostedInvoiceUrl ?? session.Invoice?.InvoicePdf;
+        var refund = session.PaymentIntent?.LatestCharge?.AmountRefunded;
+        if (refund < 0 || refund > paid) throw new InvalidOperationException("Remboursement Stripe incohérent.");
+        var receipt = invoice ?? session.PaymentIntent?.LatestCharge?.ReceiptUrl;
+        await using var tx = await db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, ct);
+        var updated = await db.Orders.Where(o=>o.Id==id && (o.Status=="pending" || o.Status=="paid"))
             .ExecuteUpdateAsync(set=>set.SetProperty(o=>o.Status,"paid").SetProperty(o=>o.StripeSessionId,session.Id)
                 .SetProperty(o=>o.CheckoutUrl,(string?)null).SetProperty(o=>o.ReceiptUrl,o=>receipt ?? o.ReceiptUrl), ct);
+        if (updated != 0)
+            await db.Database.ExecuteSqlInterpolatedAsync($"""
+                INSERT INTO order_payments (OrderId,AmountPaid,DiscountCents,RefundedCents,InvoiceUrl,PaymentIntentId)
+                VALUES ({id},{paid},{discount},{refund ?? 0},{invoice},{session.PaymentIntentId}) AS incoming
+                ON DUPLICATE KEY UPDATE InvoiceUrl=COALESCE(incoming.InvoiceUrl,order_payments.InvoiceUrl),
+                    RefundedCents=COALESCE({refund},order_payments.RefundedCents),
+                    PaymentIntentId=COALESCE(incoming.PaymentIntentId,order_payments.PaymentIntentId)
+                """, ct);
+        await tx.CommitAsync(ct);
+    }
+
+    public async Task RefreshRefund(string? paymentIntent, CancellationToken ct, string? orderReference = null)
+    {
+        if (string.IsNullOrEmpty(paymentIntent)) return;
+        var order = await (from p in db.Payments where p.PaymentIntentId == paymentIntent
+                           join o in db.Orders.AsNoTracking() on p.OrderId equals o.Id select o).SingleOrDefaultAsync(ct);
+        if (order == null && Guid.TryParseExact(orderReference, "N", out _))
+            order = await db.Orders.AsNoTracking().SingleOrDefaultAsync(o => o.Id == orderReference, ct);
+        if (order?.StripeSessionId != null) await Refresh(order, ct);
     }
 
     private async Task Release(string id, string? sessionId, CancellationToken ct)

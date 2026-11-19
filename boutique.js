@@ -108,9 +108,9 @@
     selector.replaceChildren(new Option('Choisir mon mode de livraison', ''));
     for (const [id, name] of [['locker','En Locker Mondial Relay'],['domicile','À domicile par Mondial Relay']]) {
       const method=methods.find(m=>m.id===id);
-      const suffix=method ? money(method.cents) : checkoutEnabled ? 'Indisponible' : 'Tarif à confirmer';
+      const suffix=method ? money(method.cents)+(checkoutEnabled&&!method.available?' · Indisponible':'') : 'Tarif à confirmer';
       const option=new Option(name+' · '+suffix,id);
-      option.disabled=checkoutEnabled && !method;
+      option.disabled=checkoutEnabled && !method?.available;
       selector.add(option);
     }
     selector.value=[...selector.options].some(o=>o.value===previous && !o.disabled) ? previous : '';
@@ -122,8 +122,9 @@
     const short=cartLines().some(l=>l.quantity>sizeStock(l.p,l.size));
     $('shipping-description').textContent=mode==='locker'?'Retrait dans la consigne de ton choix.':mode==='domicile'?'Livraison à l’adresse du destinataire.':'';
     $('cart-status').textContent=short?'Ajuste les quantités pour continuer.':!checkoutEnabled?'Les commandes ouvriront dès que le paiement et la livraison seront disponibles.':!mode?'Choisis ta livraison pour continuer.':!account?.connected?'Connecte-toi pour continuer ta commande.':'';
-    $('cart-login').hidden=!checkoutEnabled||!method||!!account?.connected||short;
-    $('checkout-form').hidden=!checkoutEnabled||!method||!account?.connected||short;
+    $('cart-login').hidden=!checkoutEnabled||!method?.available||!!account?.connected||short;
+    $('checkout-form').hidden=!checkoutEnabled||!method?.available||!account?.connected||short;
+    $('shipping-total').hidden=!method;
     $('locker-picker').hidden=mode!=='locker'; $('locker-id').required=mode==='locker';
     $('checkout-total').textContent=method ? money(subtotal()+method.cents) : '';
   }
@@ -131,24 +132,86 @@
   function safeLink(value,allowed) {
     try {const url=new URL(value);return url.protocol==='https:' && allowed.some(h=>url.hostname===h||url.hostname.endsWith('.'+h))?esc(url.href):null;} catch {return null;}
   }
+  let lastPrefill={};
+  function prefillCheckout(address) {
+    const form=$('checkout-form');
+    if(!address) return;
+    const fields={name:address.firstName+' '+address.lastName,street:address.street,complement:address.complement||'',postcode:address.postcode,city:address.city};
+    for(const [key,value] of Object.entries(fields)) {
+      const field=form.elements.namedItem(key);
+      if(!field.value || field.value===lastPrefill[key]) field.value=value;
+    }
+    lastPrefill=fields;
+  }
+  function orderMarkup(o) {
+    const checkout=safeLink(o.checkoutUrl,['checkout.stripe.com']);
+    const paid=o.status==='paid';
+    const req=o.returnRequest;
+    const returnStatus=({requested:'Demande de retour enregistrée',processing:'Retour en cours',received:'Retour reçu',closed:'Dossier de retour clôturé'})[req?.status] || 'Demande de retour enregistrée';
+    const returnForm=paid && (!req || req.status==='requested') ? `
+      <details><summary>${req?'Modifier ma demande de retour':'Demander un retour'}</summary>
+        <form class="shop-form return-form" data-return-form="${esc(o.id)}">
+          <label>Articles et quantités à retourner<textarea name="details" maxlength="1000" required>${esc(req?.details||'')}</textarea></label>
+          <button class="variant-button" type="submit">Enregistrer ma demande</button><p role="status"></p>
+        </form>
+      </details>` : '';
+    const lines=o.lines.map(l=>`<li>${esc(l.name)} · ${esc(sizeLabel(l.sizeCode))} × ${l.quantity}</li>`).join('');
+    return `<article class="shop-order">
+      <h4>${new Date(o.createdUtc).toLocaleDateString('fr-FR')} · ${money(o.totalCents)}</h4>
+      <p>${esc(statusName(o.status))} · ${o.lockerName?'Locker '+esc(o.lockerName):'Livraison à domicile'} · ${money(o.shippingCents)}</p>
+      <ul>${lines}</ul>
+      ${o.discountCents?'<p>Remise · −'+money(o.discountCents)+'</p>':''}
+      ${o.refundedCents?'<p>Remboursement Stripe · '+money(o.refundedCents)+'</p>':''}
+      ${o.trackingNumber?'<p>Suivi Mondial Relay · '+esc(o.trackingNumber)+'</p>':''}
+      <div class="customer-actions">
+        ${checkout?'<a class="variant-button" href="'+checkout+'">Reprendre le paiement</a>':''}
+        ${paid?'<button class="variant-button" type="button" data-invoice="'+esc(o.id)+'">Voir ma facture</button>':''}
+        ${o.status==='pending'?'<button class="text-button" data-cancel="'+esc(o.id)+'">Annuler ce paiement</button>':''}
+        ${o.status!=='expired'?'<button class="text-button" data-refresh="'+esc(o.id)+'">Actualiser</button>':''}
+      </div>${req?'<p>'+esc(returnStatus)+'</p>':''}${returnForm}</article>`;
+  }
   async function loadAccount() {
     const data=await api('/api/compte'); account=data;
     if(request && data.orders?.some(o=>o.id===request.id && o.status==='expired')) {request=null;save(requestKey,null);}
     const el=$('account-content');
     if(!data.connected) {
+      $('checkout-form').reset(); lastPrefill={};
       el.innerHTML='<p>Utilise ton compte Entreli pour retrouver tes commandes BollTrack.</p><div class="customer-actions"><a class="primary-button" href="/compte/connexion">Me connecter avec Entreli</a><a class="variant-button" href="/compte/inscription">Créer mon compte Entreli</a></div>';
     } else {
-      const profile=safeLink(data.profileUrl,['studioidentity-prod.up.railway.app','entreli.app']);
-      el.innerHTML='<p><strong>'+esc(data.name||data.email)+'</strong><br>'+esc(data.email)+'</p><div class="customer-actions">'+(profile?'<a class="variant-button" href="'+profile+'">Gérer mon profil Entreli</a>':'')+'<button class="text-button" type="button" id="logout">Déconnecter la boutique</button></div><h3>Mes commandes</h3>'+(!data.orders.length?'<p>Tu n’as pas encore de commande BollTrack.</p>':data.orders.map(o=>{
-        const checkout=safeLink(o.checkoutUrl,['checkout.stripe.com']);
-        const receipt=safeLink(o.receiptUrl,['stripe.com']);
-        const d=o.delivery;
-        return '<article class="shop-order"><h4>'+new Date(o.createdUtc).toLocaleDateString('fr-FR')+' · '+money(o.totalCents)+'</h4><p>'+esc(statusName(o.status))+' · '+(d?.locker?'Locker '+esc(d.locker.name):'Livraison à domicile')+'</p>'+(o.trackingNumber?'<p>Suivi Mondial Relay : '+esc(o.trackingNumber)+'</p>':'')+'<ul>'+o.lines.map(l=>'<li>'+esc(l.name)+' · '+esc(sizeLabel(l.sizeCode))+' × '+l.quantity+'</li>').join('')+'</ul><div class="customer-actions">'+(checkout?'<a class="variant-button" href="'+checkout+'">Reprendre le paiement</a>':'')+(receipt?'<a class="variant-button" rel="noopener" target="_blank" href="'+receipt+'">Justificatif Stripe</a>':'')+(o.status==='pending'?'<button class="text-button" data-cancel="'+esc(o.id)+'">Annuler ce paiement</button>':'')+(o.status!=='expired'?'<button class="text-button" data-refresh="'+esc(o.id)+'">Actualiser</button>':'')+'</div></article>';
-      }).join(''));
+      if(!$('address-form')) {
+        el.replaceChildren($('customer-template').content.cloneNode(true));
+        for(const [key,value] of Object.entries(data.address||{})) {
+          const field=$('address-form').elements.namedItem(key);
+          if(field) field.value=value||'';
+        }
+      }
+      prefillCheckout(data.address);
+      $('my-orders').innerHTML=data.orders.length ? data.orders.map(orderMarkup).join('') : '<p>Tu n’as pas encore de commande BollTrack.</p>';
     }
     renderCart();
     return data;
   }
+  $('account-content').addEventListener('submit',async event=>{
+    const form=event.target;
+    if(form.id!=='address-form' && !form.hasAttribute('data-return-form')) return;
+    event.preventDefault();
+    const button=form.querySelector('[type=submit]');
+    const feedback=form.querySelector('[role=status]');
+    if(button.disabled) return;
+    button.disabled=true; feedback.textContent='';
+    try {
+      const values=Object.fromEntries(new FormData(form));
+      if(form.id==='address-form') {
+        const address=await post('/api/compte/adresse',values);
+        account.address=address; prefillCheckout(address);
+        feedback.textContent='Tes coordonnées ont été enregistrées.';
+      } else {
+        await post('/api/commandes/'+form.dataset.returnForm+'/retour',values);
+        await loadAccount(); notify('Ta demande de retour est enregistrée.');
+      }
+    } catch(e){feedback.textContent=e.message;}
+    finally{button.disabled=false;}
+  });
   async function accountDialogOpen() {
     open(accountDialog);
     $('account-content').textContent='Chargement du compte…';
@@ -199,6 +262,12 @@
     }
     try {
       if(t.id==='logout'){await post('/api/deconnexion');await loadAccount();return;}
+      if(d.invoice){
+        t.disabled=true;
+        const {url}=await post('/api/commandes/'+d.invoice+'/facture');
+        if(!safeLink(url,['stripe.com'])) throw new Error('Lien de facture indisponible.');
+        location.assign(url);return;
+      }
       if(d.refresh||d.cancel){t.disabled=true;await post('/api/commandes/'+(d.refresh||d.cancel)+'/'+(d.refresh?'actualiser':'annuler'));await loadAccount();await loadCatalog();return;}
       if(t.id==='search-locker'){
         t.disabled=true;const cp=$('search-cp').value.trim();
@@ -207,7 +276,7 @@
         $('checkout-feedback').textContent=lockers.length?'':'Essaie un autre code postal.';
       }
     } catch(e){if(t.id==='search-locker') $('checkout-feedback').textContent=e.message;else notify(e.message);}
-    finally {if(t.id==='search-locker'||d.refresh||d.cancel)t.disabled=false;}
+    finally {if(t.id==='search-locker'||d.refresh||d.cancel||d.invoice)t.disabled=false;}
   });
   document.addEventListener('click',e=>{if(e.target instanceof HTMLDialogElement){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}});
   async function init(){

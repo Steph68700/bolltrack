@@ -47,3 +47,12 @@ button.primary-button:disabled{background:#d9d5c9;color:#59564d}
 #checkout-feedback:not(:empty){margin:10px 0;color:#732c27}
 .cart-bottom #cart-login{margin-top:10px}
 #cart-dialog>.text-button{margin-top:18px}
+
+#account-content .account-names{grid-template-columns:1fr 1fr}
+#address-form{margin-bottom:24px}
+#address-feedback:empty{display:none}
+#my-orders{margin-bottom:18px}
+.return-form textarea{width:100%;min-height:70px;font:inherit;color:var(--ink);background:#fffdf6;padding:8px}
+.shop-order details{margin-top:10px}
+.shop-order summary{cursor:pointer;text-decoration:underline}
+.shop-order .order-amount{font-weight:700}

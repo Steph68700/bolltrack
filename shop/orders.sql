@@ -40,3 +40,31 @@ CREATE TABLE IF NOT EXISTS shipments (
     LabelUrl text,
     FOREIGN KEY (OrderId) REFERENCES orders(Id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS customer_addresses (
+    Owner varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin PRIMARY KEY,
+    FirstName varchar(60) NOT NULL,
+    LastName varchar(60) NOT NULL,
+    Street varchar(40) NOT NULL,
+    Complement varchar(30) NOT NULL,
+    Postcode char(5) NOT NULL,
+    City varchar(30) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS order_payments (
+    OrderId char(32) CHARACTER SET ascii COLLATE ascii_bin PRIMARY KEY,
+    AmountPaid int NOT NULL,
+    DiscountCents int NOT NULL,
+    RefundedCents int NOT NULL DEFAULT 0,
+    InvoiceUrl text,
+    PaymentIntentId varchar(200) UNIQUE,
+    FOREIGN KEY (OrderId) REFERENCES orders(Id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS return_requests (
+    OrderId char(32) CHARACTER SET ascii COLLATE ascii_bin PRIMARY KEY,
+    Details varchar(1000) NOT NULL,
+    Status varchar(24) NOT NULL DEFAULT 'requested',
+    CreatedUtc datetime(6) NOT NULL,
+    FOREIGN KEY (OrderId) REFERENCES orders(Id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

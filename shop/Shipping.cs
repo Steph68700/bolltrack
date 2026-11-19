@@ -13,7 +13,7 @@ public sealed class ShopProblem(int status, string message) : Exception(message)
 public record Locker(string Id, string Name, string Street, string Postcode, string City);
 public record Delivery(string Mode, string Name, string Phone, string Street, string Postcode, string City, string? LockerId, string? Complement = null);
 public record ShippingDetails(Delivery Recipient, Locker? Locker, string Country, string CarrierMode);
-public record DeliveryMethod(string Id, int Cents);
+public record DeliveryMethod(string Id, int Cents, bool Available);
 
 public class Shipping(IConfiguration config, IHttpClientFactory clients)
 {
@@ -23,14 +23,14 @@ public class Shipping(IConfiguration config, IHttpClientFactory clients)
     public List<DeliveryMethod> Methods()
     {
         var methods = new List<DeliveryMethod>();
-        if (LockerSearchEnabled) Add("locker", "LockerCents");
-        if (config.GetValue<bool>("MondialRelay:DomicileActif")) Add("domicile", "DomicileCents");
+        Add("locker", "LockerCents", LockerSearchEnabled);
+        Add("domicile", "DomicileCents", config.GetValue<bool>("MondialRelay:DomicileActif"));
         return methods;
 
-        void Add(string id, string setting)
+        void Add(string id, string setting, bool available)
         {
             if (int.TryParse(config["MondialRelay:" + setting], out var cost) && cost is >= 0 and <= 100000)
-                methods.Add(new(id, cost));
+                methods.Add(new(id, cost, available));
         }
     }
 
@@ -98,7 +98,7 @@ public class Shipping(IConfiguration config, IHttpClientFactory clients)
             throw new ShopProblem(400, "Complète les coordonnées de livraison.");
         return v;
     }
-    private static void ValidatePostcode(string? code)
+    internal static void ValidatePostcode(string? code)
     {
         if (!Regex.IsMatch(code ?? "", @"^(?:0[1-9]|[1-8][0-9]|9[0-5])[0-9]{3}$"))
             throw new ShopProblem(400, "Saisis un code postal de France métropolitaine.");

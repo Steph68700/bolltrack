@@ -13,8 +13,8 @@
   <link rel="icon" href="icon.jpg">
   <link rel="preload" href="assets/fonts/barlow-condensed-extrabold.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/fonts/manrope-regular.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="boutique.css?v=20261119-3">
-  <script src="boutique.js?v=20261119-3" defer></script>
+  <link rel="stylesheet" href="boutique.css?v=20261119-client1">
+  <script src="boutique.js?v=20261119-client1" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#collection">Aller aux articles</a>
@@ -70,6 +70,7 @@
         <label>Ma livraison<select id="shipping-mode" aria-describedby="shipping-description"></select></label>
         <p id="shipping-description"></p>
       </div>
+      <p id="shipping-total" class="shop-total" hidden>Total avec livraison <strong id="checkout-total"></strong></p>
       <p id="cart-status" role="status"></p>
       <form id="checkout-form" class="shop-form" hidden>
         <div id="locker-picker" hidden>
@@ -78,14 +79,14 @@
           <label>Locker de retrait<select id="locker-id"><option value="">Choisir une consigne</option></select></label>
         </div>
         <fieldset><legend>Coordonnées du destinataire</legend>
-          <label>Nom et prénom<input name="name" autocomplete="name" maxlength="30" required></label>
+          <label>Nom et prénom sur le colis<input name="name" autocomplete="name" maxlength="30" pattern=".{1,30}" title="Utilise 30 caractères maximum pour l’étiquette Mondial Relay." required></label>
           <label>Téléphone<input name="phone" type="tel" autocomplete="tel" maxlength="24" required></label>
           <label>Adresse<input name="street" autocomplete="address-line1" maxlength="40" required></label>
           <label>Complément d’adresse (facultatif)<input name="complement" autocomplete="address-line2" maxlength="30"></label>
           <div class="form-pair"><label>Code postal<input name="postcode" inputmode="numeric" autocomplete="postal-code" maxlength="5" pattern="[0-9]{5}" required></label><label>Ville<input name="city" autocomplete="address-level2" maxlength="30" required></label></div>
           <small>Livraison en France métropolitaine.</small>
         </fieldset>
-        <p class="shop-total">Total avec livraison <strong id="checkout-total"></strong></p>
+        <p>Tu peux saisir un code promo sur la page de paiement Stripe.</p>
         <button class="primary-button" type="submit">Continuer vers le paiement Stripe</button>
       </form>
       <a class="primary-button" id="cart-login" href="/compte/connexion" hidden>Se connecter avec Entreli</a>
@@ -98,6 +99,23 @@
     <p class="eyebrow">BOLLTRACK × ENTRELI</p><h2 id="account-title">MON COMPTE<span>.</span></h2>
     <div id="account-content" aria-live="polite"></div>
   </dialog>
+  <template id="customer-template">
+    <form class="shop-form" id="address-form">
+      <div class="form-pair account-names">
+        <label>Nom<input name="lastName" autocomplete="family-name" maxlength="60" required></label>
+        <label>Prénom<input name="firstName" autocomplete="given-name" maxlength="60" required></label>
+      </div>
+      <fieldset><legend>Adresse de livraison</legend>
+        <label>Numéro et rue<input name="street" autocomplete="address-line1" maxlength="40" required></label>
+        <label>Complément d’adresse (facultatif)<input name="complement" autocomplete="address-line2" maxlength="30"></label>
+        <div class="form-pair"><label>Code postal<input name="postcode" autocomplete="postal-code" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" required></label><label>Ville<input name="city" autocomplete="address-level2" maxlength="30" required></label></div>
+      </fieldset>
+      <button type="submit" class="variant-button">Enregistrer mes coordonnées</button>
+      <p id="address-feedback" role="status"></p>
+    </form>
+    <h3>Mes commandes</h3><div id="my-orders"></div>
+    <button class="text-button" type="button" id="logout">Me déconnecter</button>
+  </template>
   <div class="toast" id="shop-toast" role="status" aria-live="polite" hidden></div>
 </body>
 </html>

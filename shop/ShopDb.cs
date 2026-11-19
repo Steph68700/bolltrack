@@ -8,6 +8,9 @@ namespace BollTrack;
 public class ShopDb(DbContextOptions<ShopDb> options) : DbContext(options), IDataProtectionKeyContext
 {
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; } = null!;
+    public DbSet<CustomerAddress> CustomerAddresses => Set<CustomerAddress>();
+    public DbSet<OrderPayment> Payments => Set<OrderPayment>();
+    public DbSet<ReturnRequest> Returns => Set<ReturnRequest>();
     public DbSet<Shipment> Shipments => Set<Shipment>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Stock> Stock => Set<Stock>();
@@ -15,6 +18,9 @@ public class ShopDb(DbContextOptions<ShopDb> options) : DbContext(options), IDat
     public DbSet<OrderLine> OrderLines => Set<OrderLine>();
     protected override void OnModelCreating(ModelBuilder model)
     {
+        model.Entity<CustomerAddress>().HasKey(a => a.Owner);
+        model.Entity<OrderPayment>().HasKey(p => p.OrderId);
+        model.Entity<ReturnRequest>().HasKey(r => r.OrderId);
         model.Entity<Shipment>().HasKey(s => s.OrderId);
         model.Entity<Stock>().HasKey(s => new { s.ProductId, s.SizeCode });
         model.Entity<OrderLine>().HasKey(s => new { s.OrderId, s.ProductId, s.SizeCode });
@@ -98,4 +104,34 @@ public class Shipment
     public string Status { get; set; } = "";
     public string? TrackingNumber { get; set; }
     public string? LabelUrl { get; set; }
+}
+
+[Table("customer_addresses")]
+public class CustomerAddress
+{
+    public string Owner { get; set; } = "";
+    public string FirstName { get; set; } = "";
+    public string LastName { get; set; } = "";
+    public string Street { get; set; } = "";
+    public string Complement { get; set; } = "";
+    public string Postcode { get; set; } = "";
+    public string City { get; set; } = "";
+}
+[Table("order_payments")]
+public class OrderPayment
+{
+    public string OrderId { get; set; } = "";
+    public int AmountPaid { get; set; }
+    public int DiscountCents { get; set; }
+    public int RefundedCents { get; set; }
+    public string? InvoiceUrl { get; set; }
+    public string? PaymentIntentId { get; set; }
+}
+[Table("return_requests")]
+public class ReturnRequest
+{
+    public string OrderId { get; set; } = "";
+    public string Details { get; set; } = "";
+    public string Status { get; set; } = "";
+    public DateTime CreatedUtc { get; set; }
 }
