@@ -10,7 +10,7 @@ using Stripe.Checkout;
 namespace BollTrack;
 
 public record CartItem(string ProductId, string SizeCode, int Quantity);
-public record Checkout(string RequestId, List<CartItem> Items, Delivery Delivery);
+public record Checkout(string RequestId, List<CartItem> Items, Delivery Delivery, string? TermsVersion = null);
 public class Payments(ShopDb db, Shipping shipping, IConfiguration config, SessionService? sessions = null)
 {
     public bool Enabled => !string.IsNullOrWhiteSpace(config["Stripe:SecretKey"])
@@ -30,6 +30,8 @@ public class Payments(ShopDb db, Shipping shipping, IConfiguration config, Sessi
         var fingerprint = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new { items, cart.Delivery })));
         var existing = await db.Orders.Include(o => o.Lines).SingleOrDefaultAsync(o => o.Id == cart.RequestId, ct);
         if (existing != null) return await Resume(existing, owner, fingerprint, origin, ct);
+        if (cart.TermsVersion != OrderTerms.Current)
+            throw new ShopProblem(409, "Actualise la boutique et accepte les conditions de vente avant de payer.");
         var method = shipping.Methods().Find(m => m.Id == cart.Delivery.Mode && m.Available)
             ?? throw new ShopProblem(400, "Ce mode de livraison est indisponible.");
         var delivery = await shipping.Validate(cart.Delivery, ct);
@@ -41,6 +43,7 @@ public class Payments(ShopDb db, Shipping shipping, IConfiguration config, Sessi
             await using var tx = await db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, ct);
             db.Orders.Add(order);
             await db.SaveChangesAsync(ct);
+            db.OrderTerms.Add(new OrderTerms { OrderId=order.Id, Version=OrderTerms.Current });
             foreach (var item in items)
             {
                 var product = await db.Products.AsNoTracking().SingleOrDefaultAsync(p => p.Id == item.ProductId, ct);
@@ -92,6 +95,9 @@ public class Payments(ShopDb db, Shipping shipping, IConfiguration config, Sessi
             SuccessUrl=origin + "/boutique.html?commande=" + order.Id + "#compte",
             CancelUrl=origin + "/boutique.html#panier"
         };
+        var terms = await db.OrderTerms.AsNoTracking().SingleOrDefaultAsync(t => t.OrderId == order.Id, ct);
+        if (terms != null)
+            options.InvoiceCreation.InvoiceData.Footer = "Conditions de vente de votre commande : https://www.bolltrack.fr" + OrderTerms.Pdf(terms.Version);
         Session session;
         try
         {

@@ -167,6 +167,7 @@
       const number=el('input');number.inputMode='numeric';number.pattern='[0-9]{6,20}';number.required=true;number.value=o.tracking || '';
       article.append(orderForm('Numéro de suivi Mondial Relay',number,'Enregistrer le suivi',value=>api('commandes/'+encodeURIComponent(o.id)+'/suivi',{number:value,previous:o.tracking})));
     }
+    for(const n of o.withdrawals || []) article.append(el('h4','Rétractation du '+date(n.submittedUtc)),el('p',n.firstName+' '+n.lastName+' · '+n.details,'address'));
     const req=o.returnRequest;
     if(req) {
       article.append(el('h4','Retour · '+(returnStatus[req.status] || req.status)),el('p',req.details,'address'));

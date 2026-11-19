@@ -61,6 +61,9 @@ public static class ShopAdmin
         if (more) orders.RemoveAt(pageSize);
         if (orders.Count == 0) return Results.Ok(new { more = false, orders = Array.Empty<object>() });
         var ids = orders.Select(o => o.Id).ToArray();
+        var notices = await db.Withdrawals.AsNoTracking().Where(n => ids.Contains(n.OrderId)).OrderByDescending(n => n.SubmittedUtc)
+            .Select(n => new { n.OrderId, n.FirstName, n.LastName, n.Details, n.SubmittedUtc }).ToListAsync(ct);
+        var byOrder = notices.ToLookup(n => n.OrderId);
         var payments = await db.Payments.AsNoTracking().Where(p => ids.Contains(p.OrderId)).ToDictionaryAsync(p => p.OrderId, ct);
         var shipments = await db.Shipments.AsNoTracking().Where(s => ids.Contains(s.OrderId)).ToDictionaryAsync(s => s.OrderId, ct);
         var returns = await db.Returns.AsNoTracking().Where(r => ids.Contains(r.OrderId)).ToDictionaryAsync(r => r.OrderId, ct);
@@ -69,7 +72,7 @@ public static class ShopAdmin
             var shipment = shipments.GetValueOrDefault(o.Id);
             var request = returns.GetValueOrDefault(o.Id);
             var delivery = JsonSerializer.Deserialize<ShippingDetails>(o.DeliveryJson);
-            return new { o.Id, o.CreatedUtc, o.Email, o.Status, delivery, o.ShippingCents,
+            return new { o.Id, o.CreatedUtc, o.Email, o.Status, withdrawals = byOrder[o.Id], delivery, o.ShippingCents,
                 totalCents = pay?.AmountPaid ?? o.TotalCents, refundedCents = pay?.RefundedCents ?? 0,
                 tracking = shipment?.TrackingNumber, shippingStatus = shipment?.Status,
                 canSetTracking = o.Status == "paid" && (pay == null || pay.AmountPaid == 0 || pay.RefundedCents < pay.AmountPaid)

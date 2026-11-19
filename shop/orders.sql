@@ -68,3 +68,20 @@ CREATE TABLE IF NOT EXISTS return_requests (
     CreatedUtc datetime(6) NOT NULL,
     FOREIGN KEY (OrderId) REFERENCES orders(Id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS withdrawal_notices (
+    Id char(32) CHARACTER SET ascii COLLATE ascii_bin PRIMARY KEY,
+    OrderId char(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    FirstName varchar(60) NOT NULL,
+    LastName varchar(60) NOT NULL,
+    Details varchar(1000) NOT NULL,
+    SubmittedUtc datetime(6) NOT NULL,
+    INDEX (OrderId, SubmittedUtc),
+    FOREIGN KEY (OrderId) REFERENCES orders(Id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS order_terms (
+    OrderId char(32) CHARACTER SET ascii COLLATE ascii_bin PRIMARY KEY,
+    Version varchar(32) NOT NULL,
+    FOREIGN KEY (OrderId) REFERENCES orders(Id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

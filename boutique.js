@@ -3,7 +3,7 @@
   const railwayShop='https://bolltrack-production.up.railway.app';
   const festivalOrigins=['https://www.bolltrack.fr','https://bolltrack.fr','https://steph68700.github.io'];
   const staticShop=document.documentElement.dataset.shopHost==='static' && festivalOrigins.includes(location.origin);
-  if(staticShop && (['#compte','#panier'].includes(location.hash) || new URLSearchParams(location.search).has('commande'))) {
+  if(staticShop && (['#compte','#panier','#retractation'].includes(location.hash) || new URLSearchParams(location.search).has('commande'))) {
     location.replace(railwayShop+'/boutique.html'+location.search+location.hash);
     return;
   }
@@ -153,13 +153,26 @@
     }
     lastPrefill=fields;
   }
+  const receiptUrl=(orderId,id)=>'/api/commandes/'+encodeURIComponent(orderId)+'/retractations/'+encodeURIComponent(id)+'/accuse';
+  function withdrawalMarkup(o) {
+    if(o.status!=='paid') return '';
+    const receipts=(o.withdrawals || []).map(n=>'<p><a class="terms-link" download href="'+esc(receiptUrl(o.id,n.id))+'">Télécharger l’accusé du '+esc(new Date(n.submittedUtc).toLocaleString('fr-FR'))+'</a></p>').join('');
+    const address=account?.address;
+    return '<details class="withdrawal"><summary>Renoncer au contrat ici</summary>'+
+      '<form class="shop-form" data-withdrawal="'+esc(o.id)+'"><p>Commande '+esc(o.id)+'. Vous pouvez déclarer un retour complet ou partiel, sans indiquer de motif.</p>'+
+      '<div class="form-pair"><label>Prénom<input name="firstName" autocomplete="given-name" maxlength="60" value="'+esc(address?.firstName)+'" required></label>'+
+      '<label>Nom<input name="lastName" autocomplete="family-name" maxlength="60" value="'+esc(address?.lastName)+'" required></label></div>'+
+      '<label>Commande ou articles concernés<textarea name="details" maxlength="1000" required>Toute la commande</textarea></label>'+
+      '<label>Réception de l’accusé<select name="receiptMode"><option>Fichier texte à télécharger sur cet appareil</option></select></label>'+
+      '<button class="variant-button" type="submit">Confirmer la rétractation</button><p role="status"></p></form></details>'+receipts;
+  }
   function orderMarkup(o) {
     const checkout=safeLink(o.checkoutUrl,['checkout.stripe.com']);
     const paid=o.status==='paid';
     const req=o.returnRequest;
     const returnStatus=({requested:'Demande de retour enregistrée',processing:'Retour en cours',received:'Retour reçu',closed:'Dossier de retour clôturé'})[req?.status] || 'Demande de retour enregistrée';
     const returnForm=paid && (!req || req.status==='requested') ? `
-      <details><summary>${req?'Modifier ma demande de retour':'Demander un retour'}</summary>
+      <details><summary>${req?'Préciser ma demande de retour':'Signaler un article défectueux ou demander un autre retour'}</summary>
         <form class="shop-form return-form" data-return-form="${esc(o.id)}">
           <label>Articles et quantités à retourner<textarea name="details" maxlength="1000" required>${esc(req?.details||'')}</textarea></label>
           <button class="variant-button" type="submit">Enregistrer ma demande</button><p role="status"></p>
@@ -170,6 +183,7 @@
       <h4>${new Date(o.createdUtc).toLocaleDateString('fr-FR')} · ${money(o.totalCents)}</h4>
       <p>${esc(statusName(o.status))} · ${o.lockerName?'Locker '+esc(o.lockerName):'Livraison à domicile'} · ${money(o.shippingCents)}</p>
       <ul>${lines}</ul>
+      ${o.termsPdf && /^\/assets\/boutique\/cgv-boutique-[0-9-]+\.pdf$/.test(o.termsPdf)?'<p><a class="terms-link" download href="'+esc(o.termsPdf)+'">Télécharger les CGV de ma commande</a></p>':''}
       ${o.discountCents?'<p>Remise · −'+money(o.discountCents)+'</p>':''}
       ${o.refundedCents?'<p>Remboursement Stripe · '+money(o.refundedCents)+'</p>':''}
       ${o.trackingNumber?'<p>Suivi Mondial Relay · '+esc(o.trackingNumber)+'</p>':''}
@@ -178,7 +192,7 @@
         ${paid?'<button class="variant-button" type="button" data-invoice="'+esc(o.id)+'">Voir ma facture</button>':''}
         ${o.status==='pending'?'<button class="text-button" data-cancel="'+esc(o.id)+'">Annuler ce paiement</button>':''}
         ${o.status!=='expired'?'<button class="text-button" data-refresh="'+esc(o.id)+'">Actualiser</button>':''}
-      </div>${req?'<p>'+esc(returnStatus)+'</p>':''}${returnForm}</article>`;
+      </div>${req?'<p>'+esc(returnStatus)+'</p>':''}${withdrawalMarkup(o)}${returnForm}</article>`;
   }
   async function loadAccount() {
     const data=await api('/api/compte'); account=data;
@@ -186,7 +200,7 @@
     const el=$('account-content');
     if(!data.connected) {
       $('checkout-form').reset(); lastPrefill={};
-      el.innerHTML='<p>Utilise ton compte Entreli pour retrouver tes commandes BollTrack.</p><div class="customer-actions"><a class="primary-button" href="/compte/connexion">Me connecter avec Entreli</a><a class="variant-button" href="/compte/inscription">Créer mon compte Entreli</a></div>';
+      el.innerHTML='<p>Utilise ton compte Entreli pour retrouver tes commandes BollTrack.</p><div class="customer-actions"><a class="primary-button" href="/compte/connexion'+(location.hash==='#retractation'?'?retour=retractation':'')+'">Me connecter avec Entreli</a><a class="variant-button" href="/compte/inscription">Créer mon compte Entreli</a></div>';
     } else {
       if(!$('address-form')) {
         el.replaceChildren($('customer-template').content.cloneNode(true));
@@ -204,7 +218,7 @@
   }
   $('account-content').addEventListener('submit',async event=>{
     const form=event.target;
-    if(form.id!=='address-form' && !form.hasAttribute('data-return-form')) return;
+    if(form.id!=='address-form' && !form.hasAttribute('data-return-form') && !form.hasAttribute('data-withdrawal')) return;
     event.preventDefault();
     const button=form.querySelector('[type=submit]');
     const feedback=form.querySelector('[role=status]');
@@ -212,7 +226,13 @@
     button.disabled=true; feedback.textContent='';
     try {
       const values=Object.fromEntries(new FormData(form));
-      if(form.id==='address-form') {
+      if(form.hasAttribute('data-withdrawal')) {
+        const id=form.dataset.withdrawal;
+        form.dataset.noticeId ||= crypto.randomUUID().replaceAll('-','');
+        const {id:noticeId}=await post('/api/commandes/'+encodeURIComponent(id)+'/retractations',{...values,noticeId:form.dataset.noticeId});
+        const link=document.createElement('a');link.href=receiptUrl(id,noticeId);link.download='';link.textContent='Télécharger mon accusé de réception';feedback.replaceChildren('Déclaration enregistrée. ',link);link.click();
+        await loadAccount();notify('Rétractation enregistrée. Ton accusé est aussi disponible dans Mes commandes.');
+      } else if(form.id==='address-form') {
         const address=await post('/api/compte/adresse',values);
         account.address=address; prefillCheckout(address);
         feedback.textContent='Tes coordonnées ont été enregistrées.';
@@ -235,14 +255,14 @@
     if(button.disabled) return;
     button.disabled=true; $('checkout-feedback').textContent='Préparation du paiement…';
     const items=cartLines().map(l=>({productId:l.p.id,sizeCode:l.size,quantity:l.quantity}));
-    const delivery=Object.fromEntries(new FormData(form));delivery.mode=$('shipping-mode').value;
+    const delivery=Object.fromEntries(new FormData(form));const termsVersion=delivery.termsVersion;delete delivery.termsVersion;delivery.mode=$('shipping-mode').value;
     delivery.lockerId=delivery.mode==='locker'?$('locker-id').value:null;
     // Seule l'empreinte est conservée. Les coordonnées restent dans le formulaire.
     try {
       const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify({items,delivery})));
       const hash=Array.from(new Uint8Array(bytes),x=>x.toString(16).padStart(2,'0')).join('');
       if(request?.hash!==hash) {request={id:crypto.randomUUID().replaceAll('-',''),hash,items};save(requestKey,request);}
-      const result=await post('/api/commandes',{requestId:request.id,items,delivery});
+      const result=await post('/api/commandes',{requestId:request.id,items,delivery,termsVersion});
       if(!safeLink(result.url,['checkout.stripe.com'])) throw new Error('Lien de paiement indisponible.');
       location.assign(result.url);
     } catch(e) {
@@ -253,6 +273,12 @@
   });
   document.addEventListener('click',async event=>{
     const t=event.target.closest('button,a');if(!t) return;
+    if(t.matches('a[href="/boutique.html#retractation"]')){
+      event.preventDefault();
+      if(staticShop){location.assign(railwayShop+'/boutique.html#retractation');return;}
+      history.replaceState(null,'',location.pathname+'#retractation');
+      await openWithdrawals();return;
+    }
     const d=t.dataset;
     if(d.filter||d.categoryLink){filter=d.filter||d.categoryLink;renderProducts();return;}
     if(d.product){showProduct(d.product);return;}
@@ -299,6 +325,14 @@
     finally {if(t.id==='search-locker'||d.refresh||d.cancel||d.invoice)t.disabled=false;}
   });
   document.addEventListener('click',e=>{if(e.target instanceof HTMLDialogElement){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}});
+  async function openWithdrawals(){
+    await accountDialogOpen();
+    if(!account?.connected) return;
+    $('my-orders').scrollIntoView({block:'start'});
+    const forms=$('my-orders').querySelectorAll('details.withdrawal');
+    if(forms.length===1) forms[0].open=true;
+    if(!forms.length) notify('Tu peux aussi envoyer ta déclaration à omenhaze68@gmail.com.');
+  }
   async function init(){
     const saved=staticShop ? {} : read(cartKey,{});
     for(const [key,n] of Object.entries(saved||{})) if(Number.isInteger(n)&&n>0&&n<=999)cart.set(key,n);
@@ -320,7 +354,9 @@
       await loadAccount().catch(e=>notify(e.message));return;
     }
     const query=new URLSearchParams(location.search);
-    if(location.hash==='#compte'){
+    if(location.hash==='#retractation'){
+      await openWithdrawals();
+    }else if(location.hash==='#compte'){
       await accountDialogOpen();
       const id=query.get('commande');
       if(account?.connected && id && account.orders.some(o=>o.id===id)){

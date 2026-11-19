@@ -40,6 +40,11 @@ public static class CustomerAccount
         var orders = await db.Orders.AsNoTracking().Where(o => o.Owner == owner).OrderByDescending(o => o.CreatedUtc)
             .Take(100).Include(o => o.Lines).ToListAsync(ct);
         var ids = orders.Select(o => o.Id).ToArray();
+        var terms = ids.Length == 0 ? new Dictionary<string, string>() : await db.OrderTerms.AsNoTracking()
+            .Where(t => ids.Contains(t.OrderId)).ToDictionaryAsync(t => t.OrderId, t => t.Version, ct);
+        var notices = ids.Length == 0 ? [] : await db.Withdrawals.AsNoTracking().Where(n => ids.Contains(n.OrderId))
+            .OrderByDescending(n => n.SubmittedUtc).Select(n => new { n.OrderId, n.Id, n.SubmittedUtc }).ToListAsync(ct);
+        var byOrder = notices.ToLookup(n => n.OrderId);
         var payments = ids.Length == 0 ? new Dictionary<string, OrderPayment>() : await db.Payments.AsNoTracking()
             .Where(p => ids.Contains(p.OrderId)).ToDictionaryAsync(p => p.OrderId, ct);
         var returns = ids.Length == 0 ? new Dictionary<string, ReturnRequest>() : await db.Returns.AsNoTracking()
@@ -50,7 +55,7 @@ public static class CustomerAccount
             var payment = payments.GetValueOrDefault(o.Id);
             var requested = returns.GetValueOrDefault(o.Id);
             var delivery = JsonSerializer.Deserialize<ShippingDetails>(o.DeliveryJson);
-            return new { o.Id, o.Status, o.CreatedUtc, totalCents = payment?.AmountPaid ?? o.TotalCents,
+            return new { o.Id, o.Status, o.CreatedUtc, withdrawals = byOrder[o.Id], termsPdf = terms.TryGetValue(o.Id, out var version) ? OrderTerms.Pdf(version) : null, totalCents = payment?.AmountPaid ?? o.TotalCents,
                 o.ShippingCents, discountCents = payment?.DiscountCents ?? 0, refundedCents = payment?.RefundedCents ?? 0,
                 trackingNumber = tracking.GetValueOrDefault(o.Id), lockerName = delivery?.Locker?.Name,
                 checkoutUrl = o.Status == "pending" && o.ExpiresUtc > DateTime.UtcNow ? o.CheckoutUrl : null,

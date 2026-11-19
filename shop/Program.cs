@@ -126,7 +126,7 @@ app.MapGet("/compte/inscription",async (HttpContext ctx)=>await Login(ctx,true))
 async Task Login(HttpContext ctx,bool register)
 {
     var destination = ctx.Request.Query["retour"].ToString() switch {
-        "panier" => "/boutique.html#panier", "admin" => "/boutique-admin.html", _ => "/boutique.html#compte"
+        "retractation" => "/boutique.html#retractation", "panier" => "/boutique.html#panier", "admin" => "/boutique-admin.html", _ => "/boutique.html#compte"
     };
     await ctx.ChallengeAsync("Entreli",new AuthenticationProperties{RedirectUri=destination});
     if(register && Uri.TryCreate(ctx.Response.Headers.Location,UriKind.Absolute,out var auth)
@@ -134,6 +134,7 @@ async Task Login(HttpContext ctx,bool register)
         ctx.Response.Headers.Location=QueryHelpers.AddQueryString(new Uri(authority,"/Account/Register").AbsoluteUri,"returnUrl",auth.PathAndQuery);
 }
 app.MapCustomerAccount();
+app.MapWithdrawals();
 app.MapShopAdmin();
 app.MapPost("/api/deconnexion",async(HttpContext ctx)=>{
     await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);return Results.NoContent();

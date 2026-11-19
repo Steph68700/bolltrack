@@ -10,6 +10,8 @@ public class ShopDb(DbContextOptions<ShopDb> options) : DbContext(options), IDat
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; } = null!;
     public DbSet<CustomerAddress> CustomerAddresses => Set<CustomerAddress>();
     public DbSet<OrderPayment> Payments => Set<OrderPayment>();
+    public DbSet<OrderTerms> OrderTerms => Set<OrderTerms>();
+    public DbSet<WithdrawalNotice> Withdrawals => Set<WithdrawalNotice>();
     public DbSet<ReturnRequest> Returns => Set<ReturnRequest>();
     public DbSet<Shipment> Shipments => Set<Shipment>();
     public DbSet<Product> Products => Set<Product>();
@@ -23,6 +25,7 @@ public class ShopDb(DbContextOptions<ShopDb> options) : DbContext(options), IDat
     {
         model.Entity<CustomerAddress>().HasKey(a => a.Owner);
         model.Entity<OrderPayment>().HasKey(p => p.OrderId);
+        model.Entity<OrderTerms>().HasKey(t => t.OrderId);
         model.Entity<ReturnRequest>().HasKey(r => r.OrderId);
         model.Entity<Shipment>().HasKey(s => s.OrderId);
         model.Entity<ProductListing>().HasKey(l => l.ProductId);
@@ -177,4 +180,26 @@ public class StockMovement
     public string Reason { get; set; } = "";
     public string Actor { get; set; } = "";
     public DateTime CreatedUtc { get; set; }
+}
+
+
+[Table("withdrawal_notices")]
+public class WithdrawalNotice
+{
+    public string Id { get; set; } = "";
+    public string OrderId { get; set; } = "";
+    public string FirstName { get; set; } = "";
+    public string LastName { get; set; } = "";
+    public string Details { get; set; } = "";
+    public DateTime SubmittedUtc { get; set; }
+}
+
+
+[Table("order_terms")]
+public class OrderTerms
+{
+    public const string Current = "2026-11-19";
+    public string OrderId { get; set; } = "";
+    public string Version { get; set; } = "";
+    public static string Pdf(string version) => "/assets/boutique/cgv-boutique-" + version + ".pdf";
 }

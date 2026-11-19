@@ -58,3 +58,5 @@ button.primary-button:disabled{background:#d9d5c9;color:#59564d}
 .shop-order .order-amount{font-weight:700}
 
 .terms-link{text-decoration:underline;text-underline-offset:3px}.footer-main>div{flex-wrap:wrap}.footer-main a:focus-visible{outline-color:var(--yellow)}
+
+.shop-form .terms-accept{display:flex;flex-direction:row;align-items:center;gap:.6rem}.shop-form .terms-accept input{width:1.2rem;height:1.2rem;min-height:0;flex:none}
