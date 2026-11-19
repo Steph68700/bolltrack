@@ -8,7 +8,7 @@ using MySqlConnector;
 namespace BollTrack;
 
 public record TrackingInput(string Number, string? Previous);
-public record ReturnStatusInput(string Status, string Previous);
+public record StatusChangeInput(string Status, string? Previous);
 
 public static class ShopAdmin
 {
@@ -39,6 +39,7 @@ public static class ShopAdmin
                 ).Take(100).ToListAsync(ct));
         admin.MapGet("/commandes", Orders);
         admin.MapPost("/commandes/{id}/suivi", SetTracking);
+        admin.MapPost("/commandes/{id}/expedition", SetFulfillment);
         admin.MapPost("/commandes/{id}/retour", SetReturnStatus);
     }
 
@@ -50,13 +51,14 @@ public static class ShopAdmin
         var query = db.Orders.AsNoTracking();
         query = filter switch {
             "retours" => query.Where(o => db.Returns.Any(r => r.OrderId == o.Id)),
-            "preparer" => query.Where(o => o.Status == "paid" && !db.Shipments.Any(s => s.OrderId == o.Id && s.Status == "ready")
+            "preparer" => query.Where(o => o.Status == "paid" && (o.Fulfillment == null || o.Fulfillment.Status != OrderFulfillment.Shipped)
                 && !db.Payments.Any(p => p.OrderId == o.Id && p.AmountPaid > 0 && p.RefundedCents >= p.AmountPaid)),
+            "expediees" => query.Where(o => o.Fulfillment != null && o.Fulfillment.Status == OrderFulfillment.Shipped),
             "" or null or "toutes" => query,
             _ => throw new ShopProblem(400, "Filtre de commandes invalide.")
         };
         var orders = await query.OrderByDescending(o => o.CreatedUtc).ThenByDescending(o => o.Id)
-            .Skip(index * pageSize).Take(pageSize + 1).Include(o => o.Lines).ToListAsync(ct);
+            .Skip(index * pageSize).Take(pageSize + 1).Include(o => o.Lines).Include(o => o.Fulfillment).ToListAsync(ct);
         var more = orders.Count > pageSize;
         if (more) orders.RemoveAt(pageSize);
         if (orders.Count == 0) return Results.Ok(new { more = false, orders = Array.Empty<object>() });
@@ -72,14 +74,47 @@ public static class ShopAdmin
             var shipment = shipments.GetValueOrDefault(o.Id);
             var request = returns.GetValueOrDefault(o.Id);
             var delivery = JsonSerializer.Deserialize<ShippingDetails>(o.DeliveryJson);
+            var canManageShipping = o.Status == "paid" && (pay == null || pay.AmountPaid == 0 || pay.RefundedCents < pay.AmountPaid);
             return new { o.Id, o.CreatedUtc, o.Email, o.Status, withdrawals = byOrder[o.Id], delivery, o.ShippingCents,
                 totalCents = pay?.AmountPaid ?? o.TotalCents, refundedCents = pay?.RefundedCents ?? 0,
                 tracking = shipment?.TrackingNumber, shippingStatus = shipment?.Status,
-                canSetTracking = o.Status == "paid" && (pay == null || pay.AmountPaid == 0 || pay.RefundedCents < pay.AmountPaid)
+                fulfillmentStatus = o.Fulfillment?.Status, canSetFulfillment = canManageShipping,
+                canSetTracking = canManageShipping
                     && (shipment == null || (shipment.Status == "ready" && shipment.LabelUrl == null)),
                 returnRequest = request == null ? null : new { request.Status, request.Details, request.CreatedUtc },
                 lines = o.Lines.Select(l => new { l.Name, l.SizeCode, l.Quantity }) };
         }) });
+    }
+
+    // The Stripe payment/refund update also locks this order before writing its payment row.
+    private static async Task<bool> LockPaidOrder(string id, ShopDb db, CancellationToken ct)
+    {
+        var order = (await db.Orders.FromSqlInterpolated($"SELECT * FROM orders WHERE Id={id} FOR UPDATE").AsNoTracking().ToListAsync(ct)).SingleOrDefault();
+        if (order == null) return false;
+        if (order.Status != "paid") throw new ShopProblem(409, "Seule une commande payée peut être expédiée.");
+        if (await db.Payments.AnyAsync(p => p.OrderId == id && p.AmountPaid > 0 && p.RefundedCents >= p.AmountPaid, ct))
+            throw new ShopProblem(409, "Cette commande a déjà été intégralement remboursée.");
+        return true;
+    }
+
+    private static async Task<IResult> SetFulfillment(string id, StatusChangeInput input, ShopDb db, CancellationToken ct)
+    {
+        if (input.Status is not (OrderFulfillment.Preparing or OrderFulfillment.Shipped))
+            throw new ShopProblem(400, "Choisis un état d’expédition.");
+        await using var tx = await db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, ct);
+        if (!await LockPaidOrder(id, db, ct)) return Results.NotFound();
+        var states = db.Set<OrderFulfillment>();
+        var state = await states.FindAsync([id], ct);
+        if (state?.Status == input.Status) return Results.NoContent();
+        if (state?.Status != input.Previous)
+            throw new ShopProblem(409, "L’état d’expédition a changé. Actualise la commande.");
+        if (state == null)
+            states.Add(new OrderFulfillment { OrderId = id, Status = input.Status });
+        else
+            state.Status = input.Status;
+        await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+        return Results.NoContent();
     }
 
     private static async Task<IResult> SetTracking(string id, TrackingInput input, ShopDb db, CancellationToken ct)
@@ -87,11 +122,7 @@ public static class ShopAdmin
         var number = (input.Number ?? "").Trim();
         if (!Regex.IsMatch(number, "^[0-9]{6,20}$")) throw new ShopProblem(400, "Indique le numéro de suivi Mondial Relay (6 à 20 chiffres).");
         await using var tx = await db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, ct);
-        var order = (await db.Orders.FromSqlInterpolated($"SELECT * FROM orders WHERE Id={id} FOR UPDATE").AsNoTracking().ToListAsync(ct)).SingleOrDefault();
-        if (order == null) return Results.NotFound();
-        if (order.Status != "paid") throw new ShopProblem(409, "Seule une commande payée peut être expédiée.");
-        if (await db.Payments.AnyAsync(p => p.OrderId == id && p.AmountPaid > 0 && p.RefundedCents >= p.AmountPaid, ct))
-            throw new ShopProblem(409, "Cette commande a déjà été intégralement remboursée.");
+        if (!await LockPaidOrder(id, db, ct)) return Results.NotFound();
         var shipment = await db.Shipments.FindAsync([id], ct);
         if (shipment is { Status: "ready" } && shipment.TrackingNumber == number) return Results.NoContent();
         if (shipment != null && (shipment.Status != "ready" || shipment.LabelUrl != null || shipment.TrackingNumber != input.Previous))
@@ -111,7 +142,7 @@ public static class ShopAdmin
         return Results.NoContent();
     }
 
-    private static async Task<IResult> SetReturnStatus(string id, ReturnStatusInput input, ShopDb db, CancellationToken ct)
+    private static async Task<IResult> SetReturnStatus(string id, StatusChangeInput input, ShopDb db, CancellationToken ct)
     {
         var request = await db.Returns.AsNoTracking().SingleOrDefaultAsync(r => r.OrderId == id, ct);
         if (request == null) return Results.NotFound();

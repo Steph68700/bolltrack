@@ -38,7 +38,7 @@ public static class CustomerAccount
         var address = await db.CustomerAddresses.AsNoTracking().Where(a => a.Owner == owner)
             .Select(a => new AddressInput(a.FirstName, a.LastName, a.Street, a.Complement, a.Postcode, a.City)).SingleOrDefaultAsync(ct);
         var orders = await db.Orders.AsNoTracking().Where(o => o.Owner == owner).OrderByDescending(o => o.CreatedUtc)
-            .Take(100).Include(o => o.Lines).ToListAsync(ct);
+            .Take(100).Include(o => o.Lines).Include(o => o.Fulfillment).ToListAsync(ct);
         var ids = orders.Select(o => o.Id).ToArray();
         var terms = ids.Length == 0 ? new Dictionary<string, string>() : await db.OrderTerms.AsNoTracking()
             .Where(t => ids.Contains(t.OrderId)).ToDictionaryAsync(t => t.OrderId, t => t.Version, ct);
@@ -57,7 +57,7 @@ public static class CustomerAccount
             var delivery = JsonSerializer.Deserialize<ShippingDetails>(o.DeliveryJson);
             return new { o.Id, o.Status, o.CreatedUtc, withdrawals = byOrder[o.Id], termsPdf = terms.TryGetValue(o.Id, out var version) ? OrderTerms.Pdf(version) : null, totalCents = payment?.AmountPaid ?? o.TotalCents,
                 o.ShippingCents, discountCents = payment?.DiscountCents ?? 0, refundedCents = payment?.RefundedCents ?? 0,
-                trackingNumber = tracking.GetValueOrDefault(o.Id), lockerName = delivery?.Locker?.Name,
+                fulfillmentStatus = o.Fulfillment?.Status, trackingNumber = tracking.GetValueOrDefault(o.Id), lockerName = delivery?.Locker?.Name,
                 checkoutUrl = o.Status == "pending" && o.ExpiresUtc > DateTime.UtcNow ? o.CheckoutUrl : null,
                 returnRequest = requested is null ? null : new { requested.Status, requested.Details },
                 lines = o.Lines.Select(l => new { l.Name, l.SizeCode, l.Quantity, l.PriceCents }) };

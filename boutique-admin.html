@@ -5,7 +5,7 @@
   <meta name="robots" content="noindex,nofollow">
   <title>Administration de la boutique · BollTrack</title>
   <link rel="icon" href="icon.jpg"><link rel="stylesheet" href="boutique-admin.css?v=20261119">
-  <script src="boutique-admin.js?v=20261119" defer></script>
+  <script src="boutique-admin.js?v=20261119-expedition" defer></script>
 </head>
 <body>
   <header><a class="brand" href="boutique.html">BollTrack</a><a href="boutique.html">Voir la boutique ↗</a></header>
@@ -48,7 +48,7 @@
       </section>
       <section id="commandes" hidden>
         <div class="section-head"><h2>Commandes et retours</h2><button id="reload-orders" type="button">Actualiser</button></div>
-        <label>Afficher<select id="order-filter"><option value="preparer">Commandes à préparer</option><option value="toutes">Toutes les commandes</option><option value="retours">Demandes de retour</option></select></label>
+        <label>Afficher<select id="order-filter"><option value="preparer">À préparer ou à expédier</option><option value="expediees">Commandes expédiées</option><option value="toutes">Toutes les commandes</option><option value="retours">Demandes de retour</option></select></label>
         <div id="orders" aria-live="polite"></div>
         <div class="pages"><button id="previous" type="button" disabled>Page précédente</button><span id="page"></span><button id="next" type="button" disabled>Page suivante</button></div>
       </section>

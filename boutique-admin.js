@@ -144,6 +144,7 @@
     await loadProducts();await showStock();notice('Mouvement enregistré.');
   });
   const orderStatus={paid:'Payée',pending:'Paiement en attente',expired:'Paiement clôturé'};
+  const fulfillmentLabels={preparing:'En préparation',shipped:'Expédiée'};
   const returnStatus={requested:'Demande reçue',processing:'En cours',received:'Articles reçus',closed:'Dossier clôturé'};
   function orderForm(label,control,action,save) {
     const form=el('form'), field=el('label',label), btn=el('button',action);
@@ -161,6 +162,18 @@
       ['Livraison à domicile',recipient.street,recipient.complement,[recipient.postcode,recipient.city].filter(Boolean).join(' ')];
     article.append(el('p',addr.filter(Boolean).join('\n'),'address'));
     article.append(el('p','Livraison · '+money(o.shippingCents)));
+    if(o.fulfillmentStatus) article.append(el('p','Commande · '+fulfillmentLabels[o.fulfillmentStatus]));
+    if(o.canSetFulfillment) {
+      const select=el('select');
+      select.required=true;
+      select.add(new Option('Choisir un état',''));
+      for(const [value,label] of Object.entries(fulfillmentLabels)) {
+        if(value!==o.fulfillmentStatus) select.add(new Option(label,value));
+      }
+      article.append(orderForm('État de la commande',select,'Enregistrer l’état',status=>
+        api('commandes/'+encodeURIComponent(o.id)+'/expedition',{status,previous:o.fulfillmentStatus})));
+      article.append(el('p','Choisis « Expédiée » une fois le colis remis au transporteur.'));
+    }
     if(o.refundedCents) article.append(el('p','Remboursé par Stripe · '+money(o.refundedCents)));
     if(o.tracking) article.append(el('p','Suivi Mondial Relay · '+o.tracking));
     if(o.canSetTracking) {

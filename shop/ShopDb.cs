@@ -28,6 +28,8 @@ public class ShopDb(DbContextOptions<ShopDb> options) : DbContext(options), IDat
         model.Entity<OrderTerms>().HasKey(t => t.OrderId);
         model.Entity<ReturnRequest>().HasKey(r => r.OrderId);
         model.Entity<Shipment>().HasKey(s => s.OrderId);
+        model.Entity<OrderFulfillment>().HasKey(f => f.OrderId);
+        model.Entity<ShopOrder>().HasOne(o => o.Fulfillment).WithOne().HasForeignKey<OrderFulfillment>(f => f.OrderId);
         model.Entity<ProductListing>().HasKey(l => l.ProductId);
         model.Entity<ProductListing>().HasOne(l => l.Product).WithOne().HasForeignKey<ProductListing>(l => l.ProductId);
         model.Entity<ProductPhoto>().HasKey(p => p.ProductId);
@@ -95,6 +97,16 @@ public class ShopOrder
     public int ShippingCents { get; set; }
     public int TotalCents { get; set; }
     public List<OrderLine> Lines { get; set; } = [];
+    public OrderFulfillment? Fulfillment { get; set; }
+}
+
+[Table("order_fulfillment")]
+public class OrderFulfillment
+{
+    public const string Preparing = "preparing";
+    public const string Shipped = "shipped";
+    public string OrderId { get; set; } = "";
+    public string Status { get; set; } = "";
 }
 [Table("order_lines")]
 public class OrderLine

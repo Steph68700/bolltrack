@@ -169,6 +169,7 @@
   function orderMarkup(o) {
     const checkout=safeLink(o.checkoutUrl,['checkout.stripe.com']);
     const paid=o.status==='paid';
+    const fulfillment=({preparing:'En préparation',shipped:'Expédiée'})[o.fulfillmentStatus];
     const req=o.returnRequest;
     const returnStatus=({requested:'Demande de retour enregistrée',processing:'Retour en cours',received:'Retour reçu',closed:'Dossier de retour clôturé'})[req?.status] || 'Demande de retour enregistrée';
     const returnForm=paid && (!req || req.status==='requested') ? `
@@ -181,6 +182,7 @@
     const lines=o.lines.map(l=>`<li>${esc(l.name)} · ${esc(sizeLabel(l.sizeCode))} × ${l.quantity}</li>`).join('');
     return `<article class="shop-order">
       <h4>${new Date(o.createdUtc).toLocaleDateString('fr-FR')} · ${money(o.totalCents)}</h4>
+      ${paid && fulfillment?'<p><strong>'+esc(fulfillment)+'</strong></p>':''}
       <p>${esc(statusName(o.status))} · ${o.lockerName?'Locker '+esc(o.lockerName):'Livraison à domicile'} · ${money(o.shippingCents)}</p>
       <ul>${lines}</ul>
       ${o.termsPdf && /^\/assets\/boutique\/cgv-boutique-[0-9-]+\.pdf$/.test(o.termsPdf)?'<p><a class="terms-link" download href="'+esc(o.termsPdf)+'">Télécharger les CGV de ma commande</a></p>':''}

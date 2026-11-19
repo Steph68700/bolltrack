@@ -41,6 +41,12 @@ CREATE TABLE IF NOT EXISTS shipments (
     FOREIGN KEY (OrderId) REFERENCES orders(Id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS order_fulfillment (
+    OrderId char(32) CHARACTER SET ascii COLLATE ascii_bin PRIMARY KEY,
+    Status varchar(16) NOT NULL CHECK (Status IN ('preparing','shipped')),
+    FOREIGN KEY (OrderId) REFERENCES orders(Id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS customer_addresses (
     Owner varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin PRIMARY KEY,
     FirstName varchar(60) NOT NULL,
