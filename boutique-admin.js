@@ -24,7 +24,9 @@
     $('workspace').hidden = true;
     $('access').hidden = false;
     $('access').textContent = status === 401 ? 'Connecte-toi avec ton compte Entreli pour accéder à la gestion de la boutique.' : 'L’administration est réservée au compte Entreli habilité.';
-    $('login').hidden = status !== 401;
+    $('session-email').hidden = true;
+    $('login').textContent = status === 401 ? 'Me connecter avec Entreli' : 'Changer de compte';
+    $('login').hidden = false;
   }
   async function api(path, body) {
     const opts = {credentials:'same-origin', cache:'no-store'};
@@ -215,8 +217,20 @@
   }));
   async function init() {
     try {
+      const response=await fetch('/api/compte/session',{credentials:'same-origin',cache:'no-store'});
+      if(!response.ok) throw new Error('Impossible de vérifier le compte Entreli. Actualise la page pour réessayer.');
+      const session=await response.json();
+      window.bollTrackSession(session.accountId);
+      if(!session.isAdmin) deny(session.accountId ? 403 : 401);
+      if(session.email) {
+        $('session-email').textContent='Compte Entreli · '+session.email;
+        $('session-email').hidden=false;
+      }
+      if(!session.isAdmin) return;
+      $('login').textContent='Changer de compte';$('login').hidden=false;
       await loadProducts();edit(products[0]?.id || '');
       $('workspace').hidden=false;$('access').hidden=true;
+      if(new URLSearchParams(location.search).has('connexion')) notice('Connexion interrompue. Tu peux réessayer.');
     } catch(error){if($('access').textContent.startsWith('Vérification')) $('access').textContent=error.message;}
   }
   init();

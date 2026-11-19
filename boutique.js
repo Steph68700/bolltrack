@@ -14,7 +14,7 @@
   const sizeOrder = ['XXS','XS','S','M','L','XL','2XL','3XL','4XL','5XL','TU'];
   const keyFor = (id,size) => id + ':' + size;
   const cartKey = 'bolltrack.cart.v1';
-  const requestKey = 'bolltrack.checkout.v1';
+  const legacyRequestKey = 'bolltrack.checkout.v1';
   function read(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } }
   function save(key, value) { try { localStorage.setItem(key,JSON.stringify(value)); } catch { /* Navigation privée */ } }
   async function api(path, options = {}) {
@@ -51,7 +51,7 @@
 
   const products = [], byId = new Map(), cart = new Map();
   let methods = [], checkoutEnabled = false, account = null, filter = 'all', currentProduct, selectedSize, toastTimer;
-  let request = read(requestKey, null);
+  let requestKey, request;
   const productDialog = $('product-dialog'), cartDialog = $('cart-dialog'), accountDialog = $('account-dialog');
   const available = p => p.sizes.reduce((n,s) => n+s.available,0);
   const sizeStock = (p,s) => p.sizes.find(row => row.sizeCode === s)?.available ?? 0;
@@ -133,6 +133,7 @@
     $('shipping-description').textContent=mode==='locker'?'Retrait dans la consigne de ton choix.':mode==='domicile'?'Livraison à l’adresse du destinataire.':'';
     $('cart-status').textContent=short?'Ajuste les quantités pour continuer.':!checkoutEnabled?'Les commandes ouvriront dès que le paiement et la livraison seront disponibles.':!mode?'Choisis ta livraison pour continuer.':!account?.connected?'Connecte-toi pour continuer ta commande.':'';
     $('cart-login').hidden=!checkoutEnabled||!method?.available||!!account?.connected||short;
+    $('cart-account').hidden=!account?.connected;
     $('checkout-form').hidden=!checkoutEnabled||!method?.available||!account?.connected||short;
     $('shipping-total').hidden=!method;
     $('locker-picker').hidden=mode!=='locker'; $('locker-id').required=mode==='locker';
@@ -197,11 +198,25 @@
       </div>${req?'<p>'+esc(returnStatus)+'</p>':''}${withdrawalMarkup(o)}${returnForm}</article>`;
   }
   async function loadAccount() {
-    const data=await api('/api/compte'); account=data;
-    if(request && data.orders?.some(o=>o.id===request.id && o.status==='expired')) {request=null;save(requestKey,null);}
+    const data=await api('/api/compte');
     const el=$('account-content');
-    if(!data.connected) {
+    if(!account || account.accountId!==data.accountId) {
       $('checkout-form').reset(); lastPrefill={};
+      $('locker-id').replaceChildren(new Option('Choisir une consigne',''));
+      $('checkout-feedback').textContent='';
+      el.replaceChildren();
+      requestKey=data.connected ? 'bolltrack.checkout.v2.'+data.accountId : null;
+      request=requestKey ? read(requestKey,null) : null;
+      const previous=read(legacyRequestKey,null);
+      if(previous && !request && data.orders?.some(o=>o.id===previous.id)) {
+        request=previous;save(requestKey,request);save(legacyRequestKey,null);
+      }
+    }
+    account=data;
+    window.bollTrackSession(data.accountId);
+    if(request && data.orders?.some(o=>o.id===request.id && o.status==='expired')) {request=null;save(requestKey,null);}
+    $('cart-account').querySelector('span').textContent=data.email || '';
+    if(!data.connected) {
       el.innerHTML='<p>Utilise ton compte Entreli pour retrouver tes commandes BollTrack.</p><div class="customer-actions"><a class="primary-button" href="/compte/connexion'+(location.hash==='#retractation'?'?retour=retractation':'')+'">Me connecter avec Entreli</a><a class="variant-button" href="/compte/inscription">Créer mon compte Entreli</a></div>';
     } else {
       if(!$('address-form')) {
@@ -211,6 +226,8 @@
           if(field) field.value=value||'';
         }
       }
+      $('account-email').textContent=data.email || '';
+      $('account-switch').href='/compte/connexion'+(location.hash==='#retractation'?'?retour=retractation':'');
       $('admin-link').hidden=!data.isAdmin;
       prefillCheckout(data.address);
       $('my-orders').innerHTML=data.orders.length ? data.orders.map(orderMarkup).join('') : '<p>Tu n’as pas encore de commande BollTrack.</p>';
@@ -371,9 +388,9 @@
           }
         }catch(e){notify(e.message);}
       }
-      if(query.has('connexion'))notify('Connexion interrompue. Tu peux réessayer.');
       history.replaceState(null,'',location.pathname+'#compte');
     }else if(location.hash==='#panier'){open(cartDialog);await loadAccount().catch(e=>notify(e.message));}
+    if(query.has('connexion')) notify('Connexion interrompue. Tu peux réessayer.');
   }
   init();
 })();

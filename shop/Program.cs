@@ -52,7 +52,17 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         o.Scope.Clear(); foreach(var s in new[]{"openid","profile","email"}) o.Scope.Add(s);
         o.TokenValidationParameters.NameClaimType="name";
         o.Events.OnRedirectToIdentityProvider=c=>{c.ProtocolMessage.RedirectUri=new Uri(StoreOrigin(c.Request),"/compte/retour").AbsoluteUri;return Task.CompletedTask;};
-        o.Events.OnRemoteFailure=c=>{c.HandleResponse();c.Response.Redirect("/boutique.html?connexion=interrompue#compte");return Task.CompletedTask;};
+        o.Events.OnRemoteFailure=c=>{
+            c.HandleResponse();
+            var destination=c.Properties?.RedirectUri switch {
+                "/boutique-admin.html" => "/boutique-admin.html?connexion=interrompue",
+                "/boutique.html#panier" => "/boutique.html?connexion=interrompue#panier",
+                "/boutique.html#retractation" => "/boutique.html?connexion=interrompue#retractation",
+                _ => "/boutique.html?connexion=interrompue#compte"
+            };
+            c.Response.Redirect(destination);
+            return Task.CompletedTask;
+        };
     });
 builder.Services.AddAuthorization(options => options.AddPolicy(ShopAdmin.Policy, policy =>
     policy.RequireAuthenticatedUser().RequireAssertion(ctx => ShopAdmin.IsAdmin(ctx.User, config))));
@@ -128,7 +138,9 @@ async Task Login(HttpContext ctx,bool register)
     var destination = ctx.Request.Query["retour"].ToString() switch {
         "retractation" => "/boutique.html#retractation", "panier" => "/boutique.html#panier", "admin" => "/boutique-admin.html", _ => "/boutique.html#compte"
     };
-    await ctx.ChallengeAsync("Entreli",new AuthenticationProperties{RedirectUri=destination});
+    await ctx.ChallengeAsync("Entreli",new OpenIdConnectChallengeProperties {
+        RedirectUri=destination, Prompt=register ? null : "select_account"
+    });
     if(register && Uri.TryCreate(ctx.Response.Headers.Location,UriKind.Absolute,out var auth)
         && auth.Host==authority.Host)
         ctx.Response.Headers.Location=QueryHelpers.AddQueryString(new Uri(authority,"/Account/Register").AbsoluteUri,"returnUrl",auth.PathAndQuery);

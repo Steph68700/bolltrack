@@ -27,6 +27,8 @@ public static class CustomerAccount
     public static void MapCustomerAccount(this WebApplication app)
     {
         app.MapGet("/api/compte", Read);
+        app.MapGet("/api/compte/session", (ClaimsPrincipal user, IConfiguration config) =>
+            Results.Ok(new { accountId = user.FindFirstValue("sub"), email = user.FindFirstValue("email"), isAdmin = ShopAdmin.IsAdmin(user, config) }));
         app.MapPost("/api/compte/adresse", SaveAddress).RequireAuthorization();
         app.MapPost("/api/commandes/{id}/retour", RequestReturn).RequireAuthorization();
         app.MapPost("/api/commandes/{id}/facture", Invoice).RequireAuthorization();
@@ -51,7 +53,7 @@ public static class CustomerAccount
             .Where(r => ids.Contains(r.OrderId)).ToDictionaryAsync(r => r.OrderId, ct);
         var tracking = ids.Length == 0 ? new Dictionary<string, string?>() : await db.Shipments.AsNoTracking()
             .Where(s => s.Status == "ready" && ids.Contains(s.OrderId)).ToDictionaryAsync(s => s.OrderId, s => s.TrackingNumber, ct);
-        return Results.Ok(new { connected = true, isAdmin = ShopAdmin.IsAdmin(user, config), address, orders = orders.Select(o => {
+        return Results.Ok(new { connected = true, accountId = owner, email = user.FindFirstValue("email"), isAdmin = ShopAdmin.IsAdmin(user, config), address, orders = orders.Select(o => {
             var payment = payments.GetValueOrDefault(o.Id);
             var requested = returns.GetValueOrDefault(o.Id);
             var delivery = JsonSerializer.Deserialize<ShippingDetails>(o.DeliveryJson);

@@ -4,14 +4,16 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Administration de la boutique · BollTrack</title>
-  <link rel="icon" href="icon.jpg"><link rel="stylesheet" href="boutique-admin.css?v=20261119">
-  <script src="boutique-admin.js?v=20261119-expedition" defer></script>
+  <link rel="icon" href="icon.jpg"><link rel="stylesheet" href="boutique-admin.css?v=20261119-comptes">
+  <script src="boutique-session.js?v=20261119" defer></script>
+  <script src="boutique-admin.js?v=20261119-comptes" defer></script>
 </head>
 <body>
   <header><a class="brand" href="boutique.html">BollTrack</a><a href="boutique.html">Voir la boutique ↗</a></header>
   <main>
     <h1>Administration de la boutique</h1>
     <p id="access" role="status">Vérification du compte Entreli…</p>
+    <p id="session-email" hidden></p>
     <a class="action" id="login" href="/compte/connexion?retour=admin" hidden>Me connecter avec Entreli</a>
     <div id="workspace" hidden>
       <nav aria-label="Administration"><button data-tab="produits" aria-pressed="true">Produits</button><button data-tab="stock" aria-pressed="false">Stock</button><button data-tab="commandes" aria-pressed="false">Commandes et retours</button></nav>
