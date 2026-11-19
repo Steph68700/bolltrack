@@ -17,3 +17,33 @@ dialog{border:0;color:var(--ink);background:var(--paper);padding:0;max-width:cal
 
 /* SVGs retain their shapes on systems without arrow glyphs. */
 .arrow-icon{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0}.product-arrow .arrow-icon{width:16px;height:16px}.inline-arrow{margin-left:5px;width:12px;height:12px}.primary-button>.arrow-icon,.text-button>.arrow-icon{width:19px;height:19px}.wordmark .wordmark-star{width:28px;height:28px;stroke-width:2.5;vertical-align:2px}.hero .eyebrow .star-icon{width:21px;height:21px;color:#a59b51}
+
+[hidden]{display:none!important}
+.product-price,.detail-price{color:var(--ink);font-weight:800}
+.stock-hint{display:block;color:var(--muted);font:600 12px var(--body);margin-top:5px}
+.stock-hint.sold-out{color:#783533}
+.size-options{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 18px}
+.size-options button{min-width:56px;min-height:42px;padding:5px 8px;border:1px solid #a39e94;background:transparent;color:var(--ink);font-weight:bold}
+.size-options button small{display:block;font-size:10px;font-weight:500}
+.size-options button[aria-pressed=true]{background:var(--ink);color:white;border-color:var(--ink)}
+.size-options button:disabled{color:#666156;background:#e8e5dc}
+button.primary-button:disabled{background:#d9d5c9;color:#59564d}
+.shop-total{display:flex;align-items:baseline;justify-content:space-between;font-size:17px!important;color:var(--ink)!important}
+.shop-form{display:grid;gap:14px;margin:16px 0;text-align:left}
+.shop-form label,.shop-form fieldset{display:grid;gap:4px;font-size:13px;font-weight:700}
+.shop-form fieldset{border:1px solid var(--line);padding:12px;gap:8px}
+.shop-form input,.shop-form select{width:100%;min-width:0;min-height:42px;border:1px solid #968f82;background:#fffdf6;color:var(--ink);font:16px var(--body);padding:7px 9px}
+.shop-form input:focus-visible,.shop-form select:focus-visible{outline:2px solid #694b94}
+.form-pair{display:grid;grid-template-columns:minmax(75px,1fr) minmax(100px,2fr);gap:10px}
+#locker-picker{display:grid;gap:10px}
+#account-content{margin-top:22px;font-size:14px}
+#account-content p,#account-content .primary-button{margin:10px 0}
+.customer-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.customer-actions .variant-button,.customer-actions .primary-button{text-align:center}
+.shop-order{border-top:1px solid var(--line);padding:12px 0;overflow-wrap:anywhere}
+.shop-order h4{margin:0;font-size:15px}
+.shop-order ul{padding-left:20px;margin:6px 0}
+#account-content h3{font-size:27px;margin:24px 0 8px}
+#checkout-feedback:not(:empty){margin:10px 0;color:#732c27}
+.cart-bottom #cart-login{margin-top:10px}
+#cart-dialog>.text-button{margin-top:18px}

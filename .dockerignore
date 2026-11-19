@@ -6,3 +6,5 @@ docs
 *.md
 *.log
 .env*
+**/bin/
+**/obj/

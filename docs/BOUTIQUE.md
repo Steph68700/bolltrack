@@ -1,55 +1,53 @@
-# Le magasin du Fest — première version
+# Boutique BollTrack
 
-La page `boutique.html` présente les huit articles communiqués par l’organisateur.
-Le catalogue, les filtres, les variantes, les photos agrandies et le panier
-d’aperçu fonctionnent uniquement dans le navigateur. Le panier est conservé en
-mémoire pendant la consultation et disparaît au rechargement. Aucun appel API,
-compte, paiement, réservation, commande ou envoi d’email n’est déclenché.
+La boutique utilise ASP.NET Core 8, Entity Framework Core et MySQL 8. Le projet Railway BollTrack contient les services `bolltrack` et `MySQL`. La base `bolltrack_shop` contient le catalogue, les stocks et les commandes. Entreli conserve les comptes, les mots de passe et les profils.
 
-## Contenu à compléter avant la vente
+## Stock
 
-- Confirmer le prix de chacun des huit articles (les pages historiques du site
-  présentent des tarifs différents pour certains modèles).
-- Renseigner les tailles et le stock par référence.
-- Ajouter les photos du T-shirt Omen Haze et de la casquette BollTrack 2025.
-- Confirmer les modalités et tarifs de retrait, d’expédition et de retour.
-- Connecter l’identité Entreli, une base commerciale dédiée et le compte Stripe
-  de l’association Omen Haze dans une prochaine phase.
-- Préparer les informations vendeur, les conditions de vente et la facturation
-  correspondant à la boutique avant d’activer une prise de commande.
+Dans Railway, ouvrir **BollTrack → MySQL → Data → stock**. Chaque ligne correspond à une référence et une taille. `Available` est la quantité encore disponible à la vente. Mettre à jour cette colonne pour comptabiliser une vente sur stand ou un réassort. Dans `products`, `PriceCents` est le prix unitaire en centimes. Les clients voient les nouvelles valeurs en rechargeant la boutique ou en ouvrant leur panier.
 
-Les images utilisées sont celles déjà présentes dans ce dépôt. Les visuels de
-produits absents sont explicitement indiqués comme étant à venir.
+L’inventaire communiqué le 19 novembre 2026 est importé dans une transaction par `shop/stock.sql`. La table `shop_migrations` empêche un redéploiement de rétablir les quantités initiales. Le T-shirt BollTrack 2025 est présent avec son prix et sans variante vendable.
 
-## Déploiement Railway
+## Compte Entreli
 
-Le `Dockerfile` sert le site existant, ses archives et la boutique avec Nginx.
-Le port suit la variable Railway `PORT` (8080 par défaut). `/health` est utilisé
-comme contrôle de santé. `/boutique` et `/magasin` redirigent vers
-`/boutique.html`. Aucune base, aucun volume et aucun secret ne sont nécessaires.
+Le client public `bolltrack-boutique-web` utilise le flux OpenID Connect avec code et PKCE. Le fournisseur et le portail de profil sont ceux de StudioIdentity. Les routes `/compte/connexion` et `/compte/inscription` conservent le retour à la boutique. La session locale contient les informations signées par Entreli. Chaque commande appartient au sujet Entreli de l’acheteur. L’espace client montre les articles, les montants, le statut, le justificatif Stripe lorsqu’il est disponible et le numéro de suivi après émission de l’étiquette.
 
-- Projet : `BollTrack` (`3bd50c6b-7d6c-48ad-85f8-8b50cd2abaa6`).
-- Environnement : `production` (`73859b2d-bf7f-4eb2-836f-9229c9380b1b`).
-- Source : dépôt GitHub `Steph68700/bolltrack`, branche `main`.
+## Paiement et livraison
 
-La bascule du domaine nécessite de remplacer les enregistrements DNS de
-l’ancien hébergement par les valeurs fournies par Railway. Conserver les
-autres enregistrements, en particulier ceux des emails.
+Renseigner les valeurs propres à l’association dans les variables du service Railway **bolltrack**. Les frais sont des montants facturés au client pour l’ensemble du panier, en centimes d’euro. Un tarif à zéro active la gratuité du mode correspondant.
 
-Service Railway : `bolltrack` (`6bf5da1e-c5d7-44e8-9196-77fcee9b438d`).
-Adresse provisoire vérifiée : `https://bolltrack-production.up.railway.app`.
-Le domaine `www.bolltrack.fr` est préparé sur ce service. Valeurs DNS obtenues
-le 17 novembre 2026 (la bascule n’a pas encore été effectuée) :
+| Variable | Valeur attendue |
+| --- | --- |
+| `Stripe__SecretKey` | Clé secrète du compte Stripe vendeur dans l’environnement choisi |
+| `Stripe__WebhookSecret` | Secret de signature du webhook de ce même environnement |
+| `MondialRelay__Enseigne`, `MondialRelay__ClePrivee` | Identifiants API 1 du contrat pour la recherche de Lockers |
+| `MondialRelay__LockerCents` | Frais par commande en Locker |
+| `MondialRelay__DomicileActif`, `MondialRelay__DomicileCents` | `true` lorsque le contrat couvre la livraison à domicile en France, et frais par commande |
+| `MondialRelay__Api2Login`, `MondialRelay__Api2Password`, `MondialRelay__Api2Client` | Identifiants API 2 Mondial Relay Connect pour les étiquettes |
+| `MondialRelay__Collecte`, `MondialRelay__LieuCollecte` | Mode du contrat, REL ou CCC, et code de lieu si nécessaire |
+| `MondialRelay__Expediteur__Nom`, `__Rue`, `__CodePostal`, `__Ville`, `__Telephone`, `__Email` | Chaque suffixe est précédé de `MondialRelay__Expediteur`. `__Complement` est facultatif. |
 
-| Type | Nom relatif | Valeur |
-| --- | --- | --- |
-| CNAME | `www` | `91lsbohx.up.railway.app` |
-| TXT | `_railway-verify.www` | `railway-verify=b6db04babce4c958090058188e8b57618cd4f0ddabfd0bb04c4f30cb716907a5` |
+Dans Stripe, créer une destination de type événements instantanés (snapshot) vers `https://bolltrack-production.up.railway.app/api/stripe/webhook`, pour `checkout.session.completed` et `checkout.session.expired`. La boutique lance Checkout sur la base des prix MySQL, affiche les frais avant paiement et revalide le Locker auprès de Mondial Relay. La France métropolitaine est la première zone de livraison. Les modes de livraison configurés apparaissent dans le panier.
 
-Remplacer l’ancien CNAME `www` pointant vers `steph68700.github.io`, sans
-créer un deuxième CNAME au même nom. Attendre ensuite la validation du domaine
-et du certificat dans Railway avant de considérer la migration du domaine
-comme terminée.
+Les articles sont réservés par transaction au début du paiement. Le webhook signé ou une vérification de la session auprès de Stripe confirme le règlement. Une session expirée restitue ses unités une seule fois. Un rapprochement périodique rattrape les notifications manquées. Depuis « Mon compte », le client peut reprendre ou annuler un paiement en attente.
 
-Les polices sont servies localement ; leurs licences OFL accompagnent les
-fichiers dans `assets/fonts/`.
+### Préparer une expédition
+
+Depuis le conteneur de la boutique, exécuter la commande ci-dessous pour une commande payée, avec les mesures du colis emballé. L’API 2 renvoie l’étiquette PDF et le numéro d’expédition. Le client retrouve ce numéro dans « Mon compte ». La variable `MondialRelay__Sandbox=true` sélectionne le serveur de test avec les identifiants correspondants.
+
+```sh
+dotnet /app/Shop.dll etiquette ID_COMMANDE POIDS_G LONGUEUR_CM LARGEUR_CM HAUTEUR_CM
+```
+
+La table `shipments` associe une expédition à une commande. Relancer sur un envoi confirmé restitue le lien de l’étiquette existante. Si le transporteur a pu recevoir l’envoi avant une interruption, le statut passe à `review` ou reste à `processing`. Rechercher la référence marchand (15 premiers caractères de la commande, en majuscules) dans Connect avant toute nouvelle émission. Si Connect confirme la création, reporter le numéro et l’URL dans `shipments` et passer à `ready`. Si Connect confirme son absence, retirer uniquement cette tentative avant de relancer.
+
+## Hébergement
+
+- [Boutique](https://www.bolltrack.fr/boutique.html)
+- [Application Railway](https://bolltrack-production.up.railway.app/boutique.html)
+- [Projet Railway BollTrack](https://railway.com/project/3bd50c6b-7d6c-48ad-85f8-8b50cd2abaa6)
+- [Code](https://github.com/Steph68700/bolltrack)
+
+GitHub Pages sert actuellement le domaine historique. Sa page boutique ouvre l’application Railway pour conserver la session et le panier sur la même origine. Le Dockerfile sert aussi les pages historiques et leurs médias. La connexion MySQL utilise le réseau privé de Railway via `MYSQL_URL` référencé sur le service MySQL. `Shop__Origin` fixe l’origine publique du parcours de commande et de connexion. La page de retour Entreli autorisée est `/compte/retour` sur l’hôte Railway et sur `www.bolltrack.fr`. Lors d’une future bascule DNS, aligner l’origine de la boutique et la destination de webhook Stripe.
+
+[Stripe Checkout](https://docs.stripe.com/checkout/fulfillment) · [Documentation technique Mondial Relay](https://www.mondialrelay.fr/documentation-technique/boites-a-outils/)
