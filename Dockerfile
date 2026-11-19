@@ -13,7 +13,7 @@ COPY assets/ ./wwwroot/assets/
 COPY archive/ ./wwwroot/archive/
 COPY logo/ ./wwwroot/logo/
 COPY sons/ ./wwwroot/sons/
-RUN sed -i 's/data-shop-host="static"/data-shop-host="railway"/' wwwroot/boutique.html
+RUN sed -i 's/data-shop-host="static"/data-shop-host="railway"/' wwwroot/boutique.html wwwroot/boutique-admin.html
 ENV PORT=8080
 USER app
 EXPOSE 8080

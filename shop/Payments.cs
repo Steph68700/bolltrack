@@ -17,7 +17,7 @@ public class Payments(ShopDb db, Shipping shipping, IConfiguration config, Sessi
         && !string.IsNullOrWhiteSpace(config["Stripe:WebhookSecret"]) && shipping.Methods().Any(m => m.Available);
     private SessionService Sessions => sessions ?? throw new ShopProblem(503, "Stripe est indisponible.");
 
-    public async Task<string> Create(string owner, string email, Checkout cart, CancellationToken ct)
+    public async Task<string> Create(string owner, string email, Checkout cart, string origin, CancellationToken ct)
     {
         if (!Enabled) throw new ShopProblem(503, "Les commandes ouvriront après la configuration du paiement et de la livraison.");
         if (!Guid.TryParseExact(cart.RequestId, "N", out _) || cart.Items is not { Count: > 0 and <= 60 }
@@ -29,7 +29,7 @@ public class Payments(ShopDb db, Shipping shipping, IConfiguration config, Sessi
             throw new ShopProblem(400, "Une taille figure deux fois dans le panier.");
         var fingerprint = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new { items, cart.Delivery })));
         var existing = await db.Orders.Include(o => o.Lines).SingleOrDefaultAsync(o => o.Id == cart.RequestId, ct);
-        if (existing != null) return await Resume(existing, owner, fingerprint, ct);
+        if (existing != null) return await Resume(existing, owner, fingerprint, origin, ct);
         var method = shipping.Methods().Find(m => m.Id == cart.Delivery.Mode && m.Available)
             ?? throw new ShopProblem(400, "Ce mode de livraison est indisponible.");
         var delivery = await shipping.Validate(cart.Delivery, ct);
@@ -60,17 +60,16 @@ public class Payments(ShopDb db, Shipping shipping, IConfiguration config, Sessi
             db.ChangeTracker.Clear();
             var retry = await db.Orders.Include(o => o.Lines).SingleOrDefaultAsync(o => o.Id == cart.RequestId, ct);
             if (retry == null) throw new ShopProblem(409, "Un paiement est déjà en cours. Retrouve-le dans Mon compte.");
-            return await Resume(retry, owner, fingerprint, ct);
+            return await Resume(retry, owner, fingerprint, origin, ct);
         }
-        return await Resume(order, owner, fingerprint, ct);
+        return await Resume(order, owner, fingerprint, origin, ct);
     }
 
-    private async Task<string> Resume(ShopOrder order, string owner, string hash, CancellationToken ct)
+    private async Task<string> Resume(ShopOrder order, string owner, string hash, string origin, CancellationToken ct)
     {
         if (order.Owner != owner || order.RequestHash != hash || order.Status != "pending" || order.ExpiresUtc <= DateTime.UtcNow)
             throw new ShopProblem(409, "Ce panier a changé ou a expiré. Actualise-le puis réessaie.");
         if (order.CheckoutUrl is { } url) return url;
-        var origin = config["Shop:Origin"]!.TrimEnd('/');
         var delivery = JsonSerializer.Deserialize<ShippingDetails>(order.DeliveryJson)!;
         var lines = order.Lines.OrderBy(l => l.ProductId, StringComparer.Ordinal).ThenBy(l => l.SizeCode, StringComparer.Ordinal)
             .Select(l => Line(l.Name + " · " + l.SizeCode, l.Quantity, l.PriceCents)).ToList();

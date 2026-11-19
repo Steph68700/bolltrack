@@ -1,24 +1,25 @@
 (() => {
   'use strict';
-  // GitHub Pages sert encore le domaine historique. Sur Railway, le Dockerfile
-  // identifie la version dynamique de cette même page.
-  if (document.documentElement.dataset.shopHost === 'static' &&
-      ['www.bolltrack.fr', 'bolltrack.fr', 'steph68700.github.io'].includes(location.hostname)) {
-    location.replace('https://bolltrack-production.up.railway.app/boutique.html' + location.search + location.hash);
+  const railwayShop='https://bolltrack-production.up.railway.app';
+  const festivalOrigins=['https://www.bolltrack.fr','https://bolltrack.fr','https://steph68700.github.io'];
+  const staticShop=document.documentElement.dataset.shopHost==='static' && festivalOrigins.includes(location.origin);
+  if(staticShop && (['#compte','#panier'].includes(location.hash) || new URLSearchParams(location.search).has('commande'))) {
+    location.replace(railwayShop+'/boutique.html'+location.search+location.hash);
     return;
   }
   const $ = id => document.getElementById(id);
   const money = cents => new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',minimumFractionDigits:cents % 100 ? 2 : 0}).format(cents / 100);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
   const sizeLabel = size => size === 'TU' ? 'Taille unique' : size;
-  const sizeOrder = ['S','M','L','XL','2XL','3XL','TU'];
+  const sizeOrder = ['XXS','XS','S','M','L','XL','2XL','3XL','4XL','5XL','TU'];
   const keyFor = (id,size) => id + ':' + size;
   const cartKey = 'bolltrack.cart.v1';
   const requestKey = 'bolltrack.checkout.v1';
   function read(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } }
   function save(key, value) { try { localStorage.setItem(key,JSON.stringify(value)); } catch { /* Navigation privée */ } }
   async function api(path, options = {}) {
-    const response = await fetch(path, {credentials:'same-origin',cache:'no-store',...options});
+    const publicFeed=staticShop && path==='/api/catalogue';
+    const response = await fetch(publicFeed ? railwayShop+path : path, {credentials:publicFeed?'omit':'same-origin',cache:'no-store',...options});
     if (!response.ok) {
       const body = await response.json().catch(() => ({}));
       const error = new Error(body.error || (response.status === 401 ? 'Connecte-toi avec Entreli pour continuer.' : 'Le service est temporairement indisponible.'));
@@ -27,22 +28,26 @@
     return response.status === 204 ? null : response.json();
   }
   const post = (path, body={}) => api(path,{method:'POST',headers:{'Content-Type':'application/json','X-BollTrack':'1'},body:JSON.stringify(body)});
-  const collection = [
-    {id:'bolltrack-2026-violet',name:'T-shirt BollTrack 2026 Violet',title:'T-SHIRT BOLLTRACK 2026',category:'tshirts',collection:'BOLLTRACK · 2026',color:'Violet',tag:'HIVERNAL 2026',tone:'purple',image:'tshirt-bolltrack-2.jpg',alt:'T-shirt BollTrack 2026 violet, face et dos'},
-    {id:'bolltrack-2026-jaune',name:'T-shirt BollTrack 2026 Jaune',title:'T-SHIRT BOLLTRACK 2026',category:'tshirts',collection:'BOLLTRACK · 2026',color:'Jaune',tag:'HIVERNAL 2026',tone:'yellow',image:'tshirt-bolltrack-1.jpg',alt:'T-shirt BollTrack 2026 jaune, face et dos'},
-    {id:'pull-2026-violet',name:'Pull BollTrack 2026 Violet',title:'PULL BOLLTRACK 2026',category:'pulls',collection:'BOLLTRACK · 2026',color:'Violet',tag:'HIVERNAL 2026',tone:'purple',image:'sweat-bolltrack-2.jpg',alt:'Pull à capuche BollTrack 2026 violet, face et dos'},
-    {id:'pull-2026-jaune',name:'Pull BollTrack 2026 Jaune',title:'PULL BOLLTRACK 2026',category:'pulls',collection:'BOLLTRACK · 2026',color:'Jaune',tag:'HIVERNAL 2026',tone:'yellow',image:'sweat-bolltrack-1.jpg',alt:'Pull à capuche BollTrack 2026 jaune, face et dos'},
-    {id:'bonnet-hivernal-2026',name:'Bonnet BollTrack Hivernal 2026',title:'BONNET BOLLTRACK HIVERNAL',category:'accessoires',collection:'BOLLTRACK · 2026',color:'Noir',tag:'HIVERNAL 2026',tone:'black',image:'bonnet-bolltrack-hivernal.jpg',alt:'Bonnet noir avec inscription BollTrack Hivernal',cardClass:'is-beanie'},
-    {id:'bolltrack-2025',name:'T-shirt BollTrack 2025',title:'T-SHIRT BOLLTRACK 2025',category:'tshirts',collection:'BOLLTRACK · 2025',color:null,tag:'ÉDITION 2025',tone:'black',image:'archive/06_09_2025/tshirt.jpg',alt:'Visuel du T-shirt BollTrack de l’édition 2025',cardClass:'is-archive'},
-    {id:'casquette-2025',name:'Casquette BollTrack 2025',title:'CASQUETTE BOLLTRACK 2025',category:'accessoires',collection:'BOLLTRACK · 2025',color:null,tag:'ÉDITION 2025',tone:'black',image:null,placeholder:'cap'},
-    {id:'omen-haze-homme',name:'T-shirt Omen Haze',title:'T-SHIRT OMEN HAZE',fit:'Homme',category:'tshirts',collection:'OMEN HAZE',color:null,tag:'LE GROUPE',tone:'black',image:null,placeholder:'shirt',cardClass:'is-omen'},
-    {id:'omen-haze-femme',name:'T-shirt Omen Haze',title:'T-SHIRT OMEN HAZE',fit:'Femme',category:'tshirts',collection:'OMEN HAZE',color:null,tag:'LE GROUPE',tone:'black',image:null,placeholder:'shirt',cardClass:'is-omen'}
-  ];
+  const layouts = {'bonnet-hivernal-2026':'is-beanie','bolltrack-2025':'is-archive','omen-haze-homme':'is-omen','omen-haze-femme':'is-omen'};
+  function productView(row) {
+    const variant = row.fit || (row.category !== 'accessoires' ? row.color : '');
+    const title = variant && row.name.toLocaleLowerCase('fr').endsWith(' '+variant.toLocaleLowerCase('fr'))
+      ? row.name.slice(0, -variant.length - 1) : row.name;
+    let photo = null;
+    if (row.image) {
+      const apiPhoto=staticShop && row.image.startsWith('/api/catalogue/');
+      const url = new URL(row.image, apiPhoto ? railwayShop : location.href);
+      if (url.origin === (apiPhoto ? railwayShop : location.origin)) photo = url.href;
+    }
+    return {...row, title, image:photo, alt:row.name, cardClass:layouts[row.id] || '',
+      tone:({'violet':'purple','jaune':'yellow'})[(row.color || '').toLowerCase()] || 'black',
+      placeholder:row.id==='casquette-2025'?'cap':row.category==='accessoires'?'bag':'shirt'};
+  }
   const shirtIcon = '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="m32 20-22 15 12 22 12-7v34h32V50l12 7 12-22-22-15-9 5H41l-9-5Z"/><path d="M40 24a10 10 0 0 0 20 0M34 50V31M66 50V31"/></svg>';
   const capIcon = '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M22 58c0-26 10-39 29-39 21 0 32 16 32 39M22 58h61c5 0 10 5 6 10-14 10-41 12-65 6C12 71 9 63 22 58Z"/><path d="M51 19c-11 8-12 23-12 39M54 58c-3 9-4 15 2 18M47 18h8"/></svg>';
   const bagIcon = '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M24 33h52l5 53H19l5-53Zm13 0V24a13 13 0 0 1 26 0v9"/></svg>';
-  const placeholder = product => `<div class="product-placeholder">${product.placeholder === 'cap' ? capIcon : shirtIcon}<strong>${product.fit ? 'OMEN HAZE' : 'BOLLTRACK 2025'}</strong><span>Photo de l’article à venir</span></div>`;
-  const imageMarkup = product => product.image ? `<div class="product-image-stage"><img src="${product.image}" alt="${product.alt}" width="600" height="400" loading="lazy"></div>` : placeholder(product);
+  const placeholder = product => `<div class="product-placeholder">${product.placeholder === 'cap' ? capIcon : product.placeholder === 'bag' ? bagIcon : shirtIcon}<strong>${esc(product.collection || product.name)}</strong><span>Photo de l’article à venir</span></div>`;
+  const imageMarkup = product => product.image ? `<div class="product-image-stage"><img src="${esc(product.image)}" alt="${esc(product.alt)}" width="600" height="400" loading="lazy"></div>` : placeholder(product);
 
   const products = [], byId = new Map(), cart = new Map();
   let methods = [], checkoutEnabled = false, account = null, filter = 'all', currentProduct, selectedSize, toastTimer;
@@ -57,13 +62,11 @@
   function open(dialog) { if (!dialog.open) dialog.showModal(); }
   async function loadCatalog() {
     const data=await api('/api/catalogue');
-    const stock=new Map(data.products.map(row=>[row.id,row]));
     products.length=0; byId.clear();
-    for (const visual of collection) {
-      const row=stock.get(visual.id);
-      if (!row) continue;
-      const p={...visual,...row};
-      p.sizes.sort((a,b)=>sizeOrder.indexOf(a.sizeCode)-sizeOrder.indexOf(b.sizeCode));
+    for (const row of data.products) {
+      const p=productView(row);
+      const rank=size=>sizeOrder.includes(size)?sizeOrder.indexOf(size):sizeOrder.length;
+      p.sizes.sort((a,b)=>rank(a.sizeCode)-rank(b.sizeCode)||a.sizeCode.localeCompare(b.sizeCode,'fr'));
       products.push(p); byId.set(p.id,p);
     }
     methods=data.methods; checkoutEnabled=data.checkoutEnabled;
@@ -72,12 +75,18 @@
       const category=button.dataset.filter;
       button.querySelector('span').textContent=products.filter(p=>category==='all'||p.category===category).length;
     }
+    const feature=document.querySelector('.haze-section [data-product]');
+    if(feature) {
+      const omen=products.find(p=>p.id==='omen-haze-homme'||p.id==='omen-haze-femme');
+      feature.hidden=!omen;
+      if(omen) feature.dataset.product=omen.id;
+    }
     renderProducts(); renderCart();
   }
   function renderProducts() {
     const visible=products.filter(p=>filter==='all'||p.category===filter);
     $('results-count').textContent=visible.length+' article'+(visible.length>1?'s':'');
-    $('product-grid').innerHTML=visible.map(p=>'<article class="product-card '+(p.cardClass||'')+'"><button class="product-visual" type="button" data-product="'+p.id+'" aria-label="'+esc(p.name)+'"><span class="product-tag '+p.tone+'">'+p.tag+'</span>'+imageMarkup(p)+'<span class="product-arrow" aria-hidden="true">↗</span></button><div class="product-meta"><span>'+p.collection+'</span></div><h3><button class="product-title-button" type="button" data-product="'+p.id+'">'+p.title+(p.fit||p.color&&p.category!=='accessoires'?'<br>'+esc((p.fit||p.color).toUpperCase()):'')+'</button></h3><p class="product-price">'+money(p.priceCents)+'<span class="stock-hint '+(available(p)?'':'sold-out')+'">'+(available(p)?'En stock':'Rupture de stock')+'</span></p></article>').join('');
+    $('product-grid').innerHTML=visible.map(p=>'<article class="product-card '+(p.cardClass||'')+'"><button class="product-visual" type="button" data-product="'+esc(p.id)+'" aria-label="'+esc(p.name)+'"><span class="product-tag '+p.tone+'">'+esc(p.collection || p.category)+'</span>'+imageMarkup(p)+'<span class="product-arrow" aria-hidden="true">↗</span></button><div class="product-meta"><span>'+esc(p.collection)+'</span></div><h3><button class="product-title-button" type="button" data-product="'+esc(p.id)+'">'+esc(p.title)+(p.fit||p.color&&p.category!=='accessoires'?'<br>'+esc((p.fit||p.color).toUpperCase()):'')+'</button></h3><p class="product-price">'+money(p.priceCents)+'<span class="stock-hint '+(available(p)?'':'sold-out')+'">'+(available(p)?'En stock':'Rupture de stock')+'</span></p></article>').join('');
     document.querySelectorAll('[data-filter]').forEach(b=>{const active=b.dataset.filter===filter;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
   }
   function showProduct(id, size) {
@@ -85,10 +94,10 @@
     currentProduct=p;
     selectedSize=size || (p.sizes.length===1 ? p.sizes[0].sizeCode : null);
     const related=products.filter(q=>q.collection===p.collection && q.category===p.category && (p.fit?q.fit:p.color&&q.color&&p.category!=='accessoires'));
-    const variants=related.length<2?'':'<div class="variant-links">'+related.map(q=>'<button class="variant-button" type="button" data-product="'+q.id+'" aria-pressed="'+(q.id===p.id)+'">'+esc(q.fit||q.color)+'</button>').join('')+'</div>';
-    const sizes=p.sizes.map(s=>'<button type="button" data-size="'+s.sizeCode+'" aria-pressed="'+(selectedSize===s.sizeCode)+'" '+(!s.available?'disabled':'')+'>'+sizeLabel(s.sizeCode)+'<small>'+(s.available?s.available+' en stock':'Épuisé')+'</small></button>').join('');
+    const variants=related.length<2?'':'<div class="variant-links">'+related.map(q=>'<button class="variant-button" type="button" data-product="'+esc(q.id)+'" aria-pressed="'+(q.id===p.id)+'">'+esc(q.fit||q.color)+'</button>').join('')+'</div>';
+    const sizes=p.sizes.map(s=>'<button type="button" data-size="'+esc(s.sizeCode)+'" aria-pressed="'+(selectedSize===s.sizeCode)+'" '+(!s.available?'disabled':'')+'>'+esc(sizeLabel(s.sizeCode))+'<small>'+(s.available?s.available+' en stock':'Épuisé')+'</small></button>').join('');
     const canAdd=selectedSize && sizeStock(p,selectedSize)>(cart.get(keyFor(id,selectedSize))||0);
-    $('product-detail').innerHTML='<div class="detail-layout"><div class="detail-image '+(p.cardClass||'')+' '+(!p.image?'is-placeholder':'')+'">'+(p.image?'<img src="'+p.image+'" alt="'+esc(p.alt)+'"><button class="photo-enlarge" id="photo-enlarge" type="button">Agrandir la photo ↗</button>':placeholder(p))+'</div><div class="detail-content"><p class="eyebrow">'+p.collection+'</p><h2 id="detail-title">'+esc(p.name)+'</h2><p class="detail-price">'+money(p.priceCents)+'</p>'+variants+(sizes?'<p>Choisis ta taille</p><div role="group" aria-label="Tailles disponibles" class="size-options">'+sizes+'</div>':'')+'<button class="primary-button" id="add-to-cart" type="button" '+(canAdd?'':'disabled')+'>'+(!available(p)?'Rupture de stock':selectedSize&&!canAdd?'Quantité disponible déjà au panier':'Ajouter au panier')+'</button></div></div>';
+    $('product-detail').innerHTML='<div class="detail-layout"><div class="detail-image '+(p.cardClass||'')+' '+(!p.image?'is-placeholder':'')+'">'+(p.image?'<img src="'+esc(p.image)+'" alt="'+esc(p.alt)+'"><button class="photo-enlarge" id="photo-enlarge" type="button">Agrandir la photo ↗</button>':placeholder(p))+'</div><div class="detail-content"><p class="eyebrow">'+esc(p.collection)+'</p><h2 id="detail-title">'+esc(p.name)+'</h2><p class="detail-price">'+money(p.priceCents)+'</p>'+variants+(sizes?'<p>Choisis ta taille</p><div role="group" aria-label="Tailles disponibles" class="size-options">'+sizes+'</div>':'')+'<button class="primary-button" id="add-to-cart" type="button" '+(canAdd?'':'disabled')+'>'+(!available(p)?'Rupture de stock':selectedSize&&!canAdd?'Quantité disponible déjà au panier':'Ajouter au panier')+'</button></div></div>';
     open(productDialog);
   }
   function cartLines() {
@@ -99,9 +108,10 @@
   function renderCart() {
     const lines=cartLines();
     const total=lines.reduce((t,l)=>t+l.quantity,0);
-    $('cart-count').textContent=total; $('cart-open').setAttribute('aria-label','Ouvrir le panier, '+total+' article(s)');
+    $('cart-count').hidden=staticShop;
+    $('cart-count').textContent=total; $('cart-open').setAttribute('aria-label',staticShop?'Ouvrir mon panier':'Ouvrir le panier, '+total+' article(s)');
     $('cart-bottom').hidden=!total;
-    $('cart-items').innerHTML=lines.length?lines.map(({key,quantity,p,size})=>'<article class="cart-line"><div class="cart-line-visual">'+(p.image?'<img src="'+p.image+'" alt="">':p.placeholder==='cap'?capIcon:shirtIcon)+'</div><div><h3>'+esc(p.name)+'</h3><p>'+sizeLabel(size)+' · '+money(p.priceCents)+' l’unité</p><div class="cart-line-actions"><div class="quantity-control"><button type="button" data-key="'+key+'" data-step="-1" '+(quantity<=1?'disabled':'')+' aria-label="Diminuer la quantité">−</button><output>'+quantity+'</output><button data-key="'+key+'" data-step="1" '+(quantity>=sizeStock(p,size)?'disabled':'')+' type="button" aria-label="Augmenter la quantité">+</button></div><button class="remove-button" type="button" data-remove="'+key+'">Retirer</button></div>'+(quantity>sizeStock(p,size)?'<strong class="stock-hint sold-out">Quantité disponible : '+sizeStock(p,size)+'</strong>':'')+'</div></article>').join(''):'<div class="cart-empty">'+bagIcon+'<h3>TON PANIER EST VIDE.</h3><p>Choisis un article et sa taille dans la collection.</p></div>';
+    $('cart-items').innerHTML=lines.length?lines.map(({key,quantity,p,size})=>'<article class="cart-line"><div class="cart-line-visual">'+(p.image?'<img src="'+esc(p.image)+'" alt="">':p.placeholder==='cap'?capIcon:shirtIcon)+'</div><div><h3>'+esc(p.name)+'</h3><p>'+esc(sizeLabel(size))+' · '+money(p.priceCents)+' l’unité</p><div class="cart-line-actions"><div class="quantity-control"><button type="button" data-key="'+esc(key)+'" data-step="-1" aria-label="Diminuer la quantité">−</button><output>'+quantity+'</output><button data-key="'+esc(key)+'" data-step="1" '+(quantity>=sizeStock(p,size)?'disabled':'')+' type="button" aria-label="Augmenter la quantité">+</button></div><button class="remove-button" type="button" data-remove="'+esc(key)+'">Retirer</button></div>'+(quantity>sizeStock(p,size)?'<strong class="stock-hint sold-out">Quantité disponible : '+sizeStock(p,size)+'</strong>':'')+'</div></article>').join(''):'<div class="cart-empty">'+bagIcon+'<h3>TON PANIER EST VIDE.</h3><p>Choisis un article et sa taille dans la collection.</p></div>';
     $('subtotal').textContent=money(subtotal());
     const selector=$('shipping-mode');
     const previous=selector.value || read('bolltrack.livraison', '');
@@ -185,10 +195,11 @@
           if(field) field.value=value||'';
         }
       }
+      $('admin-link').hidden=!data.isAdmin;
       prefillCheckout(data.address);
       $('my-orders').innerHTML=data.orders.length ? data.orders.map(orderMarkup).join('') : '<p>Tu n’as pas encore de commande BollTrack.</p>';
     }
-    renderCart();
+    shippingChanged();
     return data;
   }
   $('account-content').addEventListener('submit',async event=>{
@@ -247,18 +258,27 @@
     if(d.product){showProduct(d.product);return;}
     if(d.size&&currentProduct){showProduct(currentProduct.id,d.size);$('product-detail').querySelector('[aria-pressed="true"][data-size]')?.focus();return;}
     if(t.hasAttribute('data-close')){t.closest('dialog').close();return;}
+    if(staticShop && (t.id==='cart-open' || t.id==='account-open')){
+      location.assign(railwayShop+'/boutique.html'+(t.id==='cart-open'?'#panier':'#compte'));return;
+    }
     if(t.id==='cart-open'){open(cartDialog);try{await loadCatalog();await loadAccount();}catch(e){notify(e.message);}return;}
     if(t.id==='account-open'){await accountDialogOpen();return;}
     if(t.id==='add-to-cart'&&currentProduct&&selectedSize){
+      if(staticShop){
+        const intent=new URLSearchParams({article:currentProduct.id,taille:selectedSize,operation:crypto.randomUUID()});
+        location.assign(railwayShop+'/boutique.html#ajouter?'+intent);
+        return;
+      }
       const k=keyFor(currentProduct.id,selectedSize),n=cart.get(k)||0;
       if(n<sizeStock(currentProduct,selectedSize)){cart.set(k,n+1);updateCart();productDialog.close();notify(currentProduct.name+' · '+sizeLabel(selectedSize)+' ajouté au panier.');}return;
     }
     if(d.remove){cart.delete(d.remove);updateCart();return;}
     if(d.key){const [id,size]=d.key.split(':');const next=cart.get(d.key)+Number(d.step);
-      if(next>=1&&(d.step==='-1'||next<=sizeStock(byId.get(id),size))){cart.set(d.key,next);updateCart();}return;}
+      if(next===0 && d.step==='-1'){cart.delete(d.key);updateCart();}
+      else if(next>=1&&(d.step==='-1'||next<=sizeStock(byId.get(id),size))){cart.set(d.key,next);updateCart();}return;}
     if(t.id==='photo-enlarge'&&currentProduct?.image){
       let box=$('photo-dialog'); if(!box){box=document.createElement('dialog');box.id='photo-dialog';box.className='lightbox-dialog';box.setAttribute('aria-label','Photo agrandie');document.body.append(box);}
-      box.innerHTML='<button type="button" data-close class="dialog-close" aria-label="Fermer">×</button><img src="'+currentProduct.image+'" alt="'+esc(currentProduct.alt)+'">';open(box);return;
+      box.innerHTML='<button type="button" data-close class="dialog-close" aria-label="Fermer">×</button><img src="'+esc(currentProduct.image)+'" alt="'+esc(currentProduct.alt)+'">';open(box);return;
     }
     try {
       if(t.id==='logout'){await post('/api/deconnexion');await loadAccount();return;}
@@ -280,10 +300,25 @@
   });
   document.addEventListener('click',e=>{if(e.target instanceof HTMLDialogElement){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}});
   async function init(){
-    const saved=read(cartKey,{});
+    const saved=staticShop ? {} : read(cartKey,{});
     for(const [key,n] of Object.entries(saved||{})) if(Number.isInteger(n)&&n>0&&n<=999)cart.set(key,n);
     try{await loadCatalog();}
     catch(e){$('product-grid').textContent='Le stock ne peut pas être chargé. Actualise la page pour réessayer.';$('results-count').textContent='Catalogue indisponible';}
+    if(!staticShop && location.hash.startsWith('#ajouter?')){
+      const intent=new URLSearchParams(location.hash.slice(9));
+      const p=byId.get(intent.get('article')),size=intent.get('taille'),op=intent.get('operation');
+      const source=document.referrer ? new URL(document.referrer).origin : '';
+      if(!p || !p.sizes.some(s=>s.sizeCode===size)){notify('Cet article ou cette taille est indisponible.');return;}
+      history.replaceState(null,'',location.pathname);
+      // Si le navigateur masque la provenance, l'acheteur confirme la taille sur la fiche.
+      if(!festivalOrigins.includes(source) || !/^[a-f0-9-]{36}$/.test(op||'')){showProduct(p.id,size);return;}
+      const key=keyFor(p.id,size),quantity=cart.get(key)||0,seen=read('bolltrack.ajouts',[]);
+      if(!seen.includes(op) && quantity<sizeStock(p,size)) {
+        cart.set(key,quantity+1);updateCart();save('bolltrack.ajouts',[...seen.slice(-39),op]);
+      }
+      history.replaceState(null,'',location.pathname+'#panier');open(cartDialog);
+      await loadAccount().catch(e=>notify(e.message));return;
+    }
     const query=new URLSearchParams(location.search);
     if(location.hash==='#compte'){
       await accountDialogOpen();

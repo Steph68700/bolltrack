@@ -4,7 +4,11 @@ La boutique utilise ASP.NET Core 8, Entity Framework Core et MySQL 8. Le projet 
 
 ## Stock
 
-Dans Railway, ouvrir **BollTrack → MySQL → Data → stock**. Chaque ligne correspond à une référence et une taille. `Available` est la quantité encore disponible à la vente. Mettre à jour cette colonne pour comptabiliser une vente sur stand ou un réassort. Dans `products`, `PriceCents` est le prix unitaire en centimes. Les clients voient les nouvelles valeurs en rechargeant la boutique ou en ouvrant leur panier.
+Depuis **Mon compte → Administrer la boutique** (ou `/boutique-admin.html`), « Produits » permet de créer une fiche, de modifier son prix et sa photo et de choisir sa visibilité. Un nouveau produit commence masqué. Pour les accessoires, saisir `TU` comme taille unique. Dans « Stock », choisir un produit et une taille, saisir le mouvement et son motif. La transaction conserve la quantité et l’historique. Les clients voient le catalogue et les disponibilités à la prochaine ouverture du panier ou actualisation.
+
+Dans « Commandes et retours », l’association peut consulter les articles à préparer, enregistrer le numéro de suivi d’un colis expédié et suivre le traitement d’un retour. Le remboursement éventuel se fait dans Stripe.
+
+L’accès est contrôlé par le serveur. `Shop__AdminEmails` désigne l’adresse autorisée, dont Entreli doit certifier la vérification. `Shop__AdminSubjects` permet de limiter cet accès à l’identifiant Entreli de la personne habilitée. Lorsque les deux variables sont définies, les deux conditions sont requises.
 
 L’inventaire communiqué le 19 novembre 2026 est importé dans une transaction par `shop/stock.sql`. La table `shop_migrations` empêche un redéploiement de rétablir les quantités initiales. Le T-shirt BollTrack 2025 est présent avec son prix et sans variante vendable.
 
@@ -66,6 +70,4 @@ La table `shipments` associe une expédition à une commande. Relancer sur un en
 - [Projet Railway BollTrack](https://railway.com/project/3bd50c6b-7d6c-48ad-85f8-8b50cd2abaa6)
 - [Code](https://github.com/Steph68700/bolltrack)
 
-GitHub Pages sert actuellement le domaine historique. Sa page boutique ouvre l’application Railway pour conserver la session et le panier sur la même origine. Le Dockerfile sert aussi les pages historiques et leurs médias. La connexion MySQL utilise le réseau privé de Railway via `MYSQL_URL` référencé sur le service MySQL. `Shop__Origin` fixe l’origine publique du parcours de commande et de connexion. La page de retour Entreli autorisée est `/compte/retour` sur l’hôte Railway et sur `www.bolltrack.fr`. Lors d’une future bascule DNS, aligner l’origine de la boutique et la destination de webhook Stripe.
-
-[Stripe Checkout](https://docs.stripe.com/checkout/fulfillment) · [Documentation technique Mondial Relay](https://www.mondialrelay.fr/documentation-technique/boites-a-outils/)
+Le Dockerfile sert le site du festival et la boutique sur la même origine. Tant que le DNS de `www.bolltrack.fr` dirige les visiteurs vers GitHub Pages, le catalogue et les fiches restent sur le domaine du festival. La page lit le catalogue public sur Railway sans identifiants. Le panier et le compte s’ouvrent sur Railway pour retrouver la session de l’acheteur. Après le raccordement du domaine à Railway, les visiteurs gardent `www.bolltrack.fr` pendant la navigation et à leur retour d’Entreli ou de Stripe. Les deux adresses de retour Entreli restent autorisées. Le webhook Stripe peut conserver son adresse Railway.

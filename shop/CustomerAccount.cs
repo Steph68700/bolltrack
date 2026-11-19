@@ -32,7 +32,7 @@ public static class CustomerAccount
         app.MapPost("/api/commandes/{id}/facture", Invoice).RequireAuthorization();
     }
 
-    private static async Task<IResult> Read(ClaimsPrincipal user, ShopDb db, CancellationToken ct)
+    private static async Task<IResult> Read(ClaimsPrincipal user, ShopDb db, IConfiguration config, CancellationToken ct)
     {
         if (user.FindFirstValue("sub") is not {} owner) return Results.Ok(new { connected = false });
         var address = await db.CustomerAddresses.AsNoTracking().Where(a => a.Owner == owner)
@@ -46,7 +46,7 @@ public static class CustomerAccount
             .Where(r => ids.Contains(r.OrderId)).ToDictionaryAsync(r => r.OrderId, ct);
         var tracking = ids.Length == 0 ? new Dictionary<string, string?>() : await db.Shipments.AsNoTracking()
             .Where(s => s.Status == "ready" && ids.Contains(s.OrderId)).ToDictionaryAsync(s => s.OrderId, s => s.TrackingNumber, ct);
-        return Results.Ok(new { connected = true, address, orders = orders.Select(o => {
+        return Results.Ok(new { connected = true, isAdmin = ShopAdmin.IsAdmin(user, config), address, orders = orders.Select(o => {
             var payment = payments.GetValueOrDefault(o.Id);
             var requested = returns.GetValueOrDefault(o.Id);
             var delivery = JsonSerializer.Deserialize<ShippingDetails>(o.DeliveryJson);

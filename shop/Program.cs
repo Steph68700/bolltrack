@@ -51,10 +51,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         o.UsePkce=true; o.SaveTokens=false; o.MapInboundClaims=false;
         o.Scope.Clear(); foreach(var s in new[]{"openid","profile","email"}) o.Scope.Add(s);
         o.TokenValidationParameters.NameClaimType="name";
-        o.Events.OnRedirectToIdentityProvider=c=>{c.ProtocolMessage.RedirectUri=new Uri(origin,"/compte/retour").AbsoluteUri;return Task.CompletedTask;};
+        o.Events.OnRedirectToIdentityProvider=c=>{c.ProtocolMessage.RedirectUri=new Uri(StoreOrigin(c.Request),"/compte/retour").AbsoluteUri;return Task.CompletedTask;};
         o.Events.OnRemoteFailure=c=>{c.HandleResponse();c.Response.Redirect("/boutique.html?connexion=interrompue#compte");return Task.CompletedTask;};
     });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options => options.AddPolicy(ShopAdmin.Policy, policy =>
+    policy.RequireAuthenticatedUser().RequireAssertion(ctx => ShopAdmin.IsAdmin(ctx.User, config))));
 await ShopDb.Initialize(connection);
 var app=builder.Build();
 if (labelCommand)
@@ -69,22 +70,23 @@ if (labelCommand)
 // Railway terminates TLS. Only the configured public origin is used to build OIDC/Stripe redirects.
 app.Use(async(ctx,next)=>{
     var path=ctx.Request.Path;
-    var commerce=path.StartsWithSegments("/api") || path.StartsWithSegments("/compte") || path=="/boutique.html";
-    if (commerce && !app.Environment.IsDevelopment() && !ctx.Request.Host.Host.Equals(origin.Host,StringComparison.OrdinalIgnoreCase))
+    var commerce=path.StartsWithSegments("/api") || path.StartsWithSegments("/compte") || path=="/boutique.html" || path=="/boutique-admin.html";
+    var currentOrigin = StoreOrigin(ctx.Request);
+    if (commerce && !app.Environment.IsDevelopment() && !ctx.Request.Host.Host.Equals(currentOrigin.Host,StringComparison.OrdinalIgnoreCase))
     {
         if (HttpMethods.IsGet(ctx.Request.Method) || HttpMethods.IsHead(ctx.Request.Method))
             ctx.Response.Redirect(new Uri(origin, path+ctx.Request.QueryString).AbsoluteUri);
         else ctx.Response.StatusCode=421;
         return;
     }
-    if (commerce) ctx.Request.Scheme=origin.Scheme;
+    if (commerce) ctx.Request.Scheme=currentOrigin.Scheme;
     ctx.Response.Headers.XContentTypeOptions="nosniff";
     ctx.Response.Headers.XFrameOptions="SAMEORIGIN";
     ctx.Response.Headers["Referrer-Policy"]=commerce ? "no-referrer":"strict-origin-when-cross-origin";
     if(path.StartsWithSegments("/api") || path.StartsWithSegments("/compte"))
         ctx.Response.Headers.CacheControl="no-store";
     if (HttpMethods.IsPost(ctx.Request.Method) && path.StartsWithSegments("/api") && path!="/api/stripe/webhook"
-        && (ctx.Request.Headers.Origin!=origin.GetLeftPart(UriPartial.Authority) || ctx.Request.Headers["X-BollTrack"]!="1"))
+        && (ctx.Request.Headers.Origin!=currentOrigin.GetLeftPart(UriPartial.Authority) || ctx.Request.Headers["X-BollTrack"]!="1"))
     {ctx.Response.StatusCode=403;return;}
     try {await next();}
     catch(ShopProblem e) {ctx.Response.StatusCode=e.Status;await ctx.Response.WriteAsJsonAsync(new{error=e.Message});}
@@ -100,21 +102,39 @@ app.UseAuthentication(); app.UseRateLimiter(); app.UseAuthorization();
 app.MapGet("/health", async (ShopDb db, CancellationToken ct)=>
     await db.Database.CanConnectAsync(ct) ? Results.Text("ok") : Results.StatusCode(503));
 foreach(var path in new[]{"/boutique","/magasin"}) app.MapGet(path,()=>Results.Redirect("/boutique.html"));
-app.MapGet("/api/catalogue",async (ShopDb db,Shipping shipping,Payments pay,CancellationToken ct)=>{
-    var products=await db.Products.AsNoTracking().Include(p=>p.Sizes).OrderBy(p=>p.Id).ToListAsync(ct);
-    return Results.Ok(new{products=products.Select(p=>new{p.Id,p.Name,p.PriceCents,
-        sizes=p.Sizes.Select(s=>new{s.SizeCode,s.Available})}),methods=shipping.Methods(),checkoutEnabled=pay.Enabled});
+app.MapGet("/api/catalogue",async (HttpContext ctx,ShopDb db,Shipping shipping,Payments pay,CancellationToken ct)=>{
+    var requestingOrigin=ctx.Request.Headers.Origin.ToString();
+    if(requestingOrigin is "https://www.bolltrack.fr" or "https://bolltrack.fr" or "https://steph68700.github.io")
+    {
+        ctx.Response.Headers.AccessControlAllowOrigin=requestingOrigin;
+        ctx.Response.Headers.Append("Vary","Origin");
+    }
+    return Results.Ok(new { products = await Catalog.List(db, false, ct), methods = shipping.Methods(), checkoutEnabled = pay.Enabled });
 });
+app.MapGet("/api/catalogue/{id}/photo", Catalog.Photo);
+Uri StoreOrigin(HttpRequest request)
+{
+    // Both registered OIDC callbacks remain usable for sessions opened before the DNS change.
+    return request.Host.Host.ToLowerInvariant() switch {
+        "www.bolltrack.fr" => new Uri("https://www.bolltrack.fr"),
+        "bolltrack-production.up.railway.app" => new Uri("https://bolltrack-production.up.railway.app"),
+        _ => origin
+    };
+}
 app.MapGet("/compte/connexion",async (HttpContext ctx)=>await Login(ctx,false));
 app.MapGet("/compte/inscription",async (HttpContext ctx)=>await Login(ctx,true));
 async Task Login(HttpContext ctx,bool register)
 {
-    await ctx.ChallengeAsync("Entreli",new AuthenticationProperties{RedirectUri="/boutique.html#compte"});
+    var destination = ctx.Request.Query["retour"].ToString() switch {
+        "panier" => "/boutique.html#panier", "admin" => "/boutique-admin.html", _ => "/boutique.html#compte"
+    };
+    await ctx.ChallengeAsync("Entreli",new AuthenticationProperties{RedirectUri=destination});
     if(register && Uri.TryCreate(ctx.Response.Headers.Location,UriKind.Absolute,out var auth)
         && auth.Host==authority.Host)
         ctx.Response.Headers.Location=QueryHelpers.AddQueryString(new Uri(authority,"/Account/Register").AbsoluteUri,"returnUrl",auth.PathAndQuery);
 }
 app.MapCustomerAccount();
+app.MapShopAdmin();
 app.MapPost("/api/deconnexion",async(HttpContext ctx)=>{
     await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);return Results.NoContent();
 });
@@ -123,7 +143,7 @@ app.MapGet("/api/livraison/lockers",async(string cp,Shipping shipping,Cancellati
 app.MapPost("/api/commandes",async (Checkout request,HttpContext ctx,Payments pay,CancellationToken ct)=>{
     var owner=ctx.User.FindFirstValue("sub"); var email=ctx.User.FindFirstValue("email");
     if(string.IsNullOrWhiteSpace(owner)||string.IsNullOrWhiteSpace(email)) return Results.Unauthorized();
-    return Results.Ok(new{url=await pay.Create(owner,email,request,ct)});
+    return Results.Ok(new{url=await pay.Create(owner,email,request,StoreOrigin(ctx.Request).GetLeftPart(UriPartial.Authority),ct)});
 }).RequireAuthorization();
 app.MapPost("/api/commandes/{id}/{action}",async(string id,string action,HttpContext ctx,ShopDb db,Payments pay,CancellationToken ct)=>{
     var owner=ctx.User.FindFirstValue("sub");

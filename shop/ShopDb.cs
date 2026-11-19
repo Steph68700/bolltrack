@@ -13,6 +13,9 @@ public class ShopDb(DbContextOptions<ShopDb> options) : DbContext(options), IDat
     public DbSet<ReturnRequest> Returns => Set<ReturnRequest>();
     public DbSet<Shipment> Shipments => Set<Shipment>();
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductListing> Listings => Set<ProductListing>();
+    public DbSet<ProductPhoto> Photos => Set<ProductPhoto>();
+    public DbSet<StockMovement> Movements => Set<StockMovement>();
     public DbSet<Stock> Stock => Set<Stock>();
     public DbSet<ShopOrder> Orders => Set<ShopOrder>();
     public DbSet<OrderLine> OrderLines => Set<OrderLine>();
@@ -22,6 +25,10 @@ public class ShopDb(DbContextOptions<ShopDb> options) : DbContext(options), IDat
         model.Entity<OrderPayment>().HasKey(p => p.OrderId);
         model.Entity<ReturnRequest>().HasKey(r => r.OrderId);
         model.Entity<Shipment>().HasKey(s => s.OrderId);
+        model.Entity<ProductListing>().HasKey(l => l.ProductId);
+        model.Entity<ProductListing>().HasOne(l => l.Product).WithOne().HasForeignKey<ProductListing>(l => l.ProductId);
+        model.Entity<ProductPhoto>().HasKey(p => p.ProductId);
+        model.Entity<StockMovement>().HasKey(m => m.Seq);
         model.Entity<Stock>().HasKey(s => new { s.ProductId, s.SizeCode });
         model.Entity<OrderLine>().HasKey(s => new { s.OrderId, s.ProductId, s.SizeCode });
         model.Entity<ShopOrder>().HasMany(o => o.Lines).WithOne().HasForeignKey(l => l.OrderId);
@@ -44,7 +51,7 @@ public class ShopDb(DbContextOptions<ShopDb> options) : DbContext(options), IDat
     {
         await using var db = new MySqlConnection(connection);
         await db.OpenAsync();
-        foreach (var file in new[] { "stock.sql", "orders.sql" })
+        foreach (var file in new[] { "stock.sql", "orders.sql", "admin.sql" })
         {
             var sql = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, file));
             await using var command = new MySqlCommand(sql, db);
@@ -133,5 +140,41 @@ public class ReturnRequest
     public string OrderId { get; set; } = "";
     public string Details { get; set; } = "";
     public string Status { get; set; } = "";
+    public DateTime CreatedUtc { get; set; }
+}
+
+[Table("product_listings")]
+public class ProductListing
+{
+    public string ProductId { get; set; } = "";
+    public Product Product { get; set; } = null!;
+    public string Category { get; set; } = "";
+    public string CollectionName { get; set; } = "";
+    public string Color { get; set; } = "";
+    public string Fit { get; set; } = "";
+    public string? StaticImage { get; set; }
+    public string? PhotoVersion { get; set; }
+    public bool Published { get; set; }
+    public int Position { get; set; } = 100;
+    public int Revision { get; set; }
+}
+[Table("product_photos")]
+public class ProductPhoto
+{
+    public string ProductId { get; set; } = "";
+    public string ContentType { get; set; } = "";
+    public byte[] Bytes { get; set; } = [];
+}
+[Table("stock_movements")]
+public class StockMovement
+{
+    public long Seq { get; set; }
+    public string OperationId { get; set; } = "";
+    public string ProductId { get; set; } = "";
+    public string SizeCode { get; set; } = "";
+    public int Delta { get; set; }
+    public int BalanceAfter { get; set; }
+    public string Reason { get; set; } = "";
+    public string Actor { get; set; } = "";
     public DateTime CreatedUtc { get; set; }
 }

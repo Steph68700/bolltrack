@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="fr" data-shop-host="static">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Administration de la boutique · BollTrack</title>
+  <link rel="icon" href="icon.jpg"><link rel="stylesheet" href="boutique-admin.css?v=20261119">
+  <script src="boutique-admin.js?v=20261119" defer></script>
+</head>
+<body>
+  <header><a class="brand" href="boutique.html">BollTrack</a><a href="boutique.html">Voir la boutique ↗</a></header>
+  <main>
+    <h1>Administration de la boutique</h1>
+    <p id="access" role="status">Vérification du compte Entreli…</p>
+    <a class="action" id="login" href="/compte/connexion?retour=admin" hidden>Me connecter avec Entreli</a>
+    <div id="workspace" hidden>
+      <nav aria-label="Administration"><button data-tab="produits" aria-pressed="true">Produits</button><button data-tab="stock" aria-pressed="false">Stock</button><button data-tab="commandes" aria-pressed="false">Commandes et retours</button></nav>
+      <p id="feedback" role="status" aria-live="polite"></p>
+      <section id="produits">
+        <div class="section-head"><h2>Catalogue</h2><button type="button" id="new-product">Nouveau produit</button></div>
+        <label>Fiche produit<select id="product-select"></select></label>
+        <form id="product-form">
+          <div class="fields">
+            <label>Nom du produit<input name="name" required maxlength="120"></label>
+            <label>Prix en euros<input type="number" name="price" min="0.01" max="10000" step="0.01" required></label>
+            <label>Catégorie<select name="category"><option value="tshirts">T-shirts</option><option value="pulls">Pulls</option><option value="accessoires">Accessoires</option></select></label>
+            <label>Collection<input name="collection" maxlength="70"></label>
+            <label>Couleur<input name="color" maxlength="40"></label>
+            <label>Coupe<input name="fit" maxlength="32"></label>
+          </div>
+          <div class="photo"><img id="preview" alt="Aperçu de la photo du produit" hidden><label>Photo du produit<input type="file" name="photo" accept="image/jpeg,image/png,image/webp"></label></div>
+          <fieldset id="initial"><legend>Stock initial par taille</legend><div id="initial-rows"></div><button type="button" id="add-size">Ajouter une taille</button></fieldset>
+          <label class="check"><input type="checkbox" name="published">Visible en boutique</label>
+          <button class="action" type="submit">Enregistrer le produit</button>
+        </form>
+      </section>
+      <section id="stock" hidden>
+        <h2>Stock disponible</h2>
+        <label>Produit<select id="stock-product"></select></label>
+        <ul id="balances" class="balances"></ul>
+        <form id="stock-form"><div class="fields">
+          <label>Taille<input name="sizeCode" list="known-sizes" required maxlength="12" placeholder="Ex. XL ou TU"><datalist id="known-sizes"></datalist></label>
+          <label>Mouvement<select name="direction"><option value="1">Ajouter au stock</option><option value="-1">Retirer du stock</option></select></label>
+          <label>Quantité<input type="number" name="quantity" min="1" max="1000000" step="1" required></label>
+          <label>Motif<input name="reason" required maxlength="120" placeholder="Ex. vente au stand, réassort"></label>
+        </div><button class="action" type="submit">Enregistrer le mouvement</button></form>
+        <h3>Derniers ajustements manuels</h3><div id="movements"></div>
+      </section>
+      <section id="commandes" hidden>
+        <div class="section-head"><h2>Commandes et retours</h2><button id="reload-orders" type="button">Actualiser</button></div>
+        <label>Afficher<select id="order-filter"><option value="preparer">Commandes à préparer</option><option value="toutes">Toutes les commandes</option><option value="retours">Demandes de retour</option></select></label>
+        <div id="orders" aria-live="polite"></div>
+        <div class="pages"><button id="previous" type="button" disabled>Page précédente</button><span id="page"></span><button id="next" type="button" disabled>Page suivante</button></div>
+      </section>
+    </div>
+  </main>
+  <footer><a href="boutique.html">Boutique BollTrack</a><a href="cgv.html">Conditions générales de vente</a></footer>
+</body>
+</html>
