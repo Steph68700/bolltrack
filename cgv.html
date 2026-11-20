@@ -17,7 +17,7 @@
   <meta name="twitter:title" content="Conditions générales de vente · Boutique BollTrack et billetterie">
   <meta name="twitter:description" content="Conditions de vente de la boutique BollTrack, retours, garanties et billetterie du festival.">
   <meta name="twitter:image" content="https://www.bolltrack.fr/Fond.jpg">
-  <link rel="stylesheet" href="style.css?v=boutique-20261117">
+  <link rel="stylesheet" href="style.css?v=header-20261120">
   <style>
     .shop-terms {background:#17161a;color:#f9f7f3;padding:clamp(1rem,4vw,2.5rem);border-radius:.5rem}
     .shop-terms h1 {font-size:clamp(1.8rem,5vw,2.7rem);line-height:1.15}
@@ -26,7 +26,7 @@
     .legal-links {display:flex;gap:.7rem 1.4rem;flex-wrap:wrap;padding:1rem 0}
     .legal-box {border:1px solid #9c7586;border-radius:.4rem;padding:.1rem 1.1rem .7rem}
     .form-example {overflow-wrap:anywhere}
-    @media print {body, .shop-terms{background:white!important;color:black!important} body::before,.event-banner,.top-top-bar,header,footer,.legal-links,#billetterie{display:none!important}.container,.shop-terms{margin:0!important;padding:0!important;max-width:none!important}.shop-terms h1,.shop-terms h2,.shop-terms a,.shop-terms .version{color:black!important}.shop-terms h2{break-after:avoid}.legal-box{border:1px solid #555}.shop-terms a{text-decoration:underline}}
+    @media print {body, .shop-terms{background:white!important;color:black!important} body::before,header,footer,.legal-links,#billetterie{display:none!important}.container,.shop-terms{margin:0!important;padding:0!important;max-width:none!important}.shop-terms h1,.shop-terms h2,.shop-terms a,.shop-terms .version{color:black!important}.shop-terms h2{break-after:avoid}.legal-box{border:1px solid #555}.shop-terms a{text-decoration:underline}}
     .site-heading {
       color: #ff4081;
       font-size: 2em;
@@ -36,25 +36,32 @@
   </style>
 </head>
 <body>
-<a href="https://studioidentity-prod.up.railway.app/event/bolltrack-festival/" class="event-banner" target="_blank" rel="noopener noreferrer" aria-label="Des jeux, des rencontres… À ton festival. Clique ici ! (nouvel onglet)">Des jeux, des rencontres… À ton festival <span aria-hidden="true">🤘</span> <span class="event-banner-cta">Clique ici !</span></a>
-<div class="top-top-bar">
-  <div class="top-left">
-    <a href="boutique.html" class="festival-shop-link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14l1 14H4L5 7Zm3 0V5a4 4 0 0 1 8 0v2"/></svg><span>Le magasin du Fest</span><span aria-hidden="true">↗</span></a>
-    <a href="https://www.facebook.com/profile.php?id=61576657292655">Facebook ||</a>
-    <a href="https://www.instagram.com/bolltrack/">Instagram</a>
-  </div>
-  <div class="top-center">
+<header class="festival-header">
+  <nav class="festival-links" aria-label="Liens du festival">
+    <a class="festival-shop" href="boutique.html">
+      <svg aria-hidden="true" focusable="false"><use href="assets/festival-icons.svg#magasin"/></svg>
+      Magasin
+    </a>
+    <a class="festival-tickets" href="billeterie.html" aria-label="Acheter des billets">
+      <svg aria-hidden="true" focusable="false"><use href="assets/festival-icons.svg#billets"/></svg>
+      <span class="full-label">Acheter des billets</span><span class="short-label">Billets</span>
+    </a>
+    <a class="festival-social" href="https://www.instagram.com/bolltrack/" aria-label="Instagram">
+      <svg aria-hidden="true" focusable="false"><use href="assets/festival-icons.svg#instagram"/></svg>
+      <span class="full-label">Instagram</span>
+    </a>
+    <a class="festival-social" href="https://www.facebook.com/profile.php?id=61576657292655" aria-label="Facebook">
+      <svg aria-hidden="true" focusable="false"><use href="assets/festival-icons.svg#facebook"/></svg>
+      <span class="full-label">Facebook</span>
+    </a>
+    <a class="festival-entreli" href="https://studioidentity-prod.up.railway.app/event/bolltrack-festival/" target="_blank" rel="noopener noreferrer" aria-label="Entreli, l’espace du BollTrack Festival (nouvel onglet)">Entreli</a>
+  </nav>
+  <div class="festival-intro">
     <div class="site-heading"><a href="index.html" class="site-title">Boll Track Festival</a></div>
-              07 novembre 2026 à Bollwiller - Salle polyvalente, 36 rue de Lyon
-    <div id="countdown" class="countdown-timer"><span>🕒 Le festival commence dans : Chargement... </span></div>
-    <p></p>
+    <p>07 novembre 2026 à Bollwiller - Salle polyvalente, 36 rue de Lyon</p>
+    <div id="countdown" class="countdown-timer">🕒 Le festival commence dans : Chargement…</div>
   </div>
-  <div class="button-right">
-    <a href="billeterie.html" class="button">🎟 Acheter des billets</a>
-  </div>
-</div>
-
-<header>
+  <div class="festival-menu-bar">
     <div class="edition-switcher">
       <label for="edition-select">Choisir une édition</label>
       <select id="edition-select" onchange="window.location.href=this.value">
@@ -72,6 +79,7 @@
       <a href="plan.html">Plan du festival et Accès</a>
       <a href="infos.html">Infos utiles et contact</a>
     </div>
+  </div>
 </header>
 
 <main class="container">
