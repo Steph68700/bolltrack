@@ -4,9 +4,9 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Administration de la boutique · BollTrack</title>
-  <link rel="icon" href="icon.jpg"><link rel="stylesheet" href="boutique-admin.css?v=20261119-comptes">
+  <link rel="icon" href="icon.jpg"><link rel="stylesheet" href="boutique-admin.css?v=20261120-etiquettes">
   <script src="boutique-session.js?v=20261119" defer></script>
-  <script src="boutique-admin.js?v=20261119-comptes" defer></script>
+  <script src="boutique-admin.js?v=20261120-etiquettes" defer></script>
 </head>
 <body>
   <header><a class="brand" href="boutique.html">BollTrack</a><a href="boutique.html">Voir la boutique ↗</a></header>
@@ -50,6 +50,22 @@
       </section>
       <section id="commandes" hidden>
         <div class="section-head"><h2>Commandes et retours</h2><button id="reload-orders" type="button">Actualiser</button></div>
+        <p id="label-setup" hidden>Pour activer les étiquettes, configure l’API 2, l’expéditeur et la collecte dans les réglages serveur de la boutique. Les accès API 2 se trouvent dans <a href="https://connect.mondialrelay.com/" target="_blank" rel="noopener noreferrer">Mondial Relay Connect</a>.</p>
+        <p id="label-sandbox" hidden>Mode test Mondial Relay. Les étiquettes de test ne permettent pas de déposer un colis.</p>
+        <template id="shipment-label-form">
+          <form class="label-form">
+            <h4>Étiquette Mondial Relay</h4>
+            <label>Poids du colis emballé (g)<input name="weightGrams" type="number" min="1" step="1" required></label>
+            <details><summary>Dimensions du colis (facultatif)</summary>
+              <div class="fields">
+                <label>Longueur (cm)<input name="lengthCm" type="number" min="1" step="1"></label>
+                <label>Largeur (cm)<input name="widthCm" type="number" min="1" step="1"></label>
+                <label>Hauteur (cm)<input name="heightCm" type="number" min="1" step="1"></label>
+              </div>
+            </details>
+            <button class="action" type="submit">Générer l’étiquette et le suivi</button>
+          </form>
+        </template>
         <label>Afficher<select id="order-filter"><option value="preparer">À préparer ou à expédier</option><option value="expediees">Commandes expédiées</option><option value="toutes">Toutes les commandes</option><option value="retours">Demandes de retour</option></select></label>
         <div id="orders" aria-live="polite"></div>
         <div class="pages"><button id="previous" type="button" disabled>Page précédente</button><span id="page"></span><button id="next" type="button" disabled>Page suivante</button></div>

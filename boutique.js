@@ -189,7 +189,7 @@
       ${o.termsPdf && /^\/assets\/boutique\/cgv-boutique-[0-9-]+\.pdf$/.test(o.termsPdf)?'<p><a class="terms-link" download href="'+esc(o.termsPdf)+'">Télécharger les CGV de ma commande</a></p>':''}
       ${o.discountCents?'<p>Remise · −'+money(o.discountCents)+'</p>':''}
       ${o.refundedCents?'<p>Remboursement Stripe · '+money(o.refundedCents)+'</p>':''}
-      ${o.trackingNumber?'<p>Suivi Mondial Relay · '+esc(o.trackingNumber)+'</p>':''}
+      ${o.trackingNumber?'<p>Suivi Mondial Relay · '+esc(o.trackingNumber)+' · <a class="terms-link" href="https://www.mondialrelay.fr/suivi-de-colis/?numeroExpedition='+encodeURIComponent(o.trackingNumber)+'" target="_blank" rel="noopener noreferrer">Suivre mon colis</a></p>':''}
       <div class="customer-actions">
         ${checkout?'<a class="variant-button" href="'+checkout+'">Reprendre le paiement</a>':''}
         ${paid?'<button class="variant-button" type="button" data-invoice="'+esc(o.id)+'">Voir ma facture</button>':''}

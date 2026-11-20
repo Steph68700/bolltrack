@@ -37,15 +37,11 @@ public class Shipping(IConfiguration config, IHttpClientFactory clients)
     // L'adresse du destinataire est requise aussi pour les étiquettes Locker.
     public async Task<ShippingDetails> Validate(Delivery data, CancellationToken ct)
     {
-        var phone = Regex.Replace(Clean(data.Phone, 24), @"[\s().-]", "");
-        if (phone.StartsWith("0033")) phone = "+" + phone[2..];
-        if (phone.StartsWith('0')) phone = "+33" + phone[1..];
+        var phone = NormalizePhone(data.Phone);
         var d = new Delivery(data.Mode, Clean(data.Name, 30), phone,
             Clean(data.Street, 40), Clean(data.Postcode, 5), Clean(data.City, 30), data.LockerId,
             string.IsNullOrWhiteSpace(data.Complement) ? null : Clean(data.Complement, 30));
         ValidatePostcode(d.Postcode);
-        if (!Regex.IsMatch(d.Phone, @"^\+33[1-9][0-9]{8}$"))
-            throw new ShopProblem(400, "Vérifie le numéro de téléphone pour la livraison.");
         if (d.Mode == "domicile") return new(d with { LockerId = null }, null, "FR", "HOM");
         if (d.Mode != "locker" || !Regex.IsMatch(d.LockerId ?? "", "^[0-9]{6}$"))
             throw new ShopProblem(400, "Sélectionne un Locker.");
@@ -53,6 +49,15 @@ public class Shipping(IConfiguration config, IHttpClientFactory clients)
         var locker = lockers.FirstOrDefault(l => l.Id == d.LockerId)
             ?? throw new ShopProblem(409, "Ce Locker est indisponible. Choisis-en un autre.");
         return new(d, locker, "FR", "24R");
+    }
+    internal static string NormalizePhone(string? value)
+    {
+        var phone = Regex.Replace(Clean(value, 24), @"[\s().-]", "");
+        if (phone.StartsWith("0033")) phone = "+" + phone[2..];
+        if (phone.StartsWith('0')) phone = "+33" + phone[1..];
+        if (!Regex.IsMatch(phone, @"^\+33[1-9][0-9]{8}$"))
+            throw new ShopProblem(400, "Vérifie le numéro de téléphone pour la livraison.");
+        return phone;
     }
 
     public async Task<List<Locker>> Search(string? postcode, string? id, CancellationToken ct)

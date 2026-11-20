@@ -24,6 +24,7 @@ builder.Services.AddDbContext<ShopDb>(o => o.UseMySql(connection,new MySqlServer
 builder.Services.AddDataProtection().SetApplicationName("BollTrack.Boutique").PersistKeysToDbContext<ShopDb>();
 builder.Services.AddHttpClient("carrier", c=>c.Timeout=TimeSpan.FromSeconds(10));
 builder.Services.AddScoped<Shipping>();
+builder.Services.AddScoped<Labels>();
 if (!string.IsNullOrWhiteSpace(config["Stripe:SecretKey"]))
     builder.Services.AddSingleton(new SessionService(new StripeClient(config["Stripe:SecretKey"])));
 builder.Services.AddScoped<Payments>();
@@ -71,9 +72,7 @@ var app=builder.Build();
 if (labelCommand)
 {
     using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<ShopDb>();
-    var client = scope.ServiceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("carrier");
-    try { await Labels.Create(args, db, config, client); }
+    try { await scope.ServiceProvider.GetRequiredService<Labels>().RunCommand(args); }
     catch (ShopProblem e) { Console.Error.WriteLine(e.Message); Environment.ExitCode = 1; }
     return;
 }

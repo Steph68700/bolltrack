@@ -35,7 +35,9 @@
     if (r.status===401 || r.status===403) deny(r.status);
     if (!r.ok) {
       const info = await r.json().catch(()=>({}));
-      throw new Error(info.error || 'Action indisponible. Actualise la page pour réessayer.');
+      const error=new Error(info.error || 'Action indisponible. Actualise la page pour réessayer.');
+      error.status=r.status;
+      throw error;
     }
     return r.status===204 ? null : r.json();
   }
@@ -154,7 +156,29 @@
     submit(form,async()=>{await save(control.value);await loadOrders();notice('Commande mise à jour.');});
     return form;
   }
-  function orderView(o) {
+  function labelForm(order, configured) {
+    const form=$('shipment-label-form').content.firstElementChild.cloneNode(true);
+    const fields=form.elements;
+    fields.weightGrams.max=order.delivery?.locker ? '25000' : '30000';
+    form.querySelector('[type=submit]').disabled=!configured;
+    submit(form,async()=>{
+      const parcel={weightGrams:fields.weightGrams.valueAsNumber};
+      for(const name of ['lengthCm','widthCm','heightCm']) {
+        if(fields[name].value) parcel[name]=fields[name].valueAsNumber;
+      }
+      let label;
+      try {
+        label=await api('commandes/'+encodeURIComponent(order.id)+'/etiquette',parcel);
+      } catch(error) {
+        if(error.status===409 || error.status===502) await loadOrders();
+        throw error;
+      }
+      await loadOrders();
+      notice('Étiquette disponible. Le suivi '+label.trackingNumber+' est enregistré dans le compte client.');
+    });
+    return form;
+  }
+  function orderView(o, labelsConfigured) {
     const article=el('article',undefined,'order'), recipient=o.delivery?.recipient || {}, locker=o.delivery?.locker;
     article.append(el('h3',date(o.createdUtc)+' · '+money(o.totalCents)),el('p','Commande '+o.id+' · '+(orderStatus[o.status] || o.status)));
     const list=el('ul');
@@ -163,7 +187,7 @@
     const addr=locker ? ['Locker '+locker.id+' · '+locker.name,locker.street,[locker.postcode,locker.city].join(' ')] :
       ['Livraison à domicile',recipient.street,recipient.complement,[recipient.postcode,recipient.city].filter(Boolean).join(' ')];
     article.append(el('p',addr.filter(Boolean).join('\n'),'address'));
-    article.append(el('p','Livraison · '+money(o.shippingCents)));
+    article.append(el('p','Port facturé au client · '+money(o.shippingCents)));
     if(o.fulfillmentStatus) article.append(el('p','Commande · '+fulfillmentLabels[o.fulfillmentStatus]));
     if(o.canSetFulfillment) {
       const select=el('select');
@@ -178,6 +202,15 @@
     }
     if(o.refundedCents) article.append(el('p','Remboursé par Stripe · '+money(o.refundedCents)));
     if(o.tracking) article.append(el('p','Suivi Mondial Relay · '+o.tracking));
+    if(o.labelUrl) {
+      const link=el('a','Ouvrir l’étiquette PDF','action');
+      link.href=o.labelUrl;link.target='_blank';link.rel='noopener noreferrer';
+      article.append(link);
+    } else if(o.shippingStatus==='review' || o.shippingStatus==='processing') {
+      article.append(el('p','Émission en cours ou à vérifier dans Mondial Relay Connect. Référence marchand : '+o.id.slice(0,15).toUpperCase()+'.'));
+    } else if(o.canCreateLabel) {
+      article.append(labelForm(o,labelsConfigured));
+    }
     if(o.canSetTracking) {
       const number=el('input');number.inputMode='numeric';number.pattern='[0-9]{6,20}';number.required=true;number.value=o.tracking || '';
       article.append(orderForm('Numéro de suivi Mondial Relay',number,'Enregistrer le suivi',value=>api('commandes/'+encodeURIComponent(o.id)+'/suivi',{number:value,previous:o.tracking})));
@@ -200,7 +233,9 @@
     $('orders').textContent='Chargement des commandes…';$('next').disabled=true;$('previous').disabled=true;
     const data=await api('commandes?filter='+encodeURIComponent($('order-filter').value)+'&page='+page);
     if(version!==ordersVersion) return;
-    $('orders').replaceChildren(...data.orders.map(orderView));
+    $('label-setup').hidden=data.labelsConfigured;
+    $('label-sandbox').hidden=!data.labelSandbox;
+    $('orders').replaceChildren(...data.orders.map(o=>orderView(o,data.labelsConfigured)));
     if(!data.orders.length) $('orders').textContent='Aucune commande pour ce filtre.';
     $('previous').disabled=page===0;$('next').disabled=!data.more;$('page').textContent='Page '+(page+1);
   }

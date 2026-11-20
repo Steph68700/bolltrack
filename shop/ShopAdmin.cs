@@ -38,12 +38,14 @@ public static class ShopAdmin
                    select new { m.ProductId, name = p.Name, m.SizeCode, m.Delta, m.BalanceAfter, m.Reason, m.CreatedUtc }
                 ).Take(100).ToListAsync(ct));
         admin.MapGet("/commandes", Orders);
+        admin.MapPost("/commandes/{id}/etiquette", async (string id, ParcelMeasurements parcel, Labels labels, CancellationToken ct) =>
+            Results.Ok(await labels.Issue(id, parcel, ct)));
         admin.MapPost("/commandes/{id}/suivi", SetTracking);
         admin.MapPost("/commandes/{id}/expedition", SetFulfillment);
         admin.MapPost("/commandes/{id}/retour", SetReturnStatus);
     }
 
-    private static async Task<IResult> Orders(int? page, string? filter, ShopDb db, CancellationToken ct)
+    private static async Task<IResult> Orders(int? page, string? filter, ShopDb db, IConfiguration config, CancellationToken ct)
     {
         const int pageSize = 30;
         var index = page ?? 0;
@@ -61,7 +63,9 @@ public static class ShopAdmin
             .Skip(index * pageSize).Take(pageSize + 1).Include(o => o.Lines).Include(o => o.Fulfillment).ToListAsync(ct);
         var more = orders.Count > pageSize;
         if (more) orders.RemoveAt(pageSize);
-        if (orders.Count == 0) return Results.Ok(new { more = false, orders = Array.Empty<object>() });
+        var labelsConfigured = Labels.IsConfigured(config);
+        var labelSandbox = config.GetValue<bool>("MondialRelay:Sandbox");
+        if (orders.Count == 0) return Results.Ok(new { more = false, labelsConfigured, labelSandbox, orders = Array.Empty<object>() });
         var ids = orders.Select(o => o.Id).ToArray();
         var notices = await db.Withdrawals.AsNoTracking().Where(n => ids.Contains(n.OrderId)).OrderByDescending(n => n.SubmittedUtc)
             .Select(n => new { n.OrderId, n.FirstName, n.LastName, n.Details, n.SubmittedUtc }).ToListAsync(ct);
@@ -69,7 +73,7 @@ public static class ShopAdmin
         var payments = await db.Payments.AsNoTracking().Where(p => ids.Contains(p.OrderId)).ToDictionaryAsync(p => p.OrderId, ct);
         var shipments = await db.Shipments.AsNoTracking().Where(s => ids.Contains(s.OrderId)).ToDictionaryAsync(s => s.OrderId, ct);
         var returns = await db.Returns.AsNoTracking().Where(r => ids.Contains(r.OrderId)).ToDictionaryAsync(r => r.OrderId, ct);
-        return Results.Ok(new { more, orders = orders.Select(o => {
+        return Results.Ok(new { more, labelsConfigured, labelSandbox, orders = orders.Select(o => {
             var pay = payments.GetValueOrDefault(o.Id);
             var shipment = shipments.GetValueOrDefault(o.Id);
             var request = returns.GetValueOrDefault(o.Id);
@@ -77,7 +81,8 @@ public static class ShopAdmin
             var canManageShipping = o.Status == "paid" && (pay == null || pay.AmountPaid == 0 || pay.RefundedCents < pay.AmountPaid);
             return new { o.Id, o.CreatedUtc, o.Email, o.Status, withdrawals = byOrder[o.Id], delivery, o.ShippingCents,
                 totalCents = pay?.AmountPaid ?? o.TotalCents, refundedCents = pay?.RefundedCents ?? 0,
-                tracking = shipment?.TrackingNumber, shippingStatus = shipment?.Status,
+                tracking = shipment?.TrackingNumber, shippingStatus = shipment?.Status, labelUrl = shipment?.LabelUrl,
+                canCreateLabel = canManageShipping && shipment == null && o.Fulfillment?.Status != OrderFulfillment.Shipped,
                 fulfillmentStatus = o.Fulfillment?.Status, canSetFulfillment = canManageShipping,
                 canSetTracking = canManageShipping
                     && (shipment == null || (shipment.Status == "ready" && shipment.LabelUrl == null)),
@@ -87,14 +92,14 @@ public static class ShopAdmin
     }
 
     // The Stripe payment/refund update also locks this order before writing its payment row.
-    private static async Task<bool> LockPaidOrder(string id, ShopDb db, CancellationToken ct)
+    internal static async Task<ShopOrder?> LockPaidOrder(string id, ShopDb db, CancellationToken ct)
     {
         var order = (await db.Orders.FromSqlInterpolated($"SELECT * FROM orders WHERE Id={id} FOR UPDATE").AsNoTracking().ToListAsync(ct)).SingleOrDefault();
-        if (order == null) return false;
+        if (order == null) return null;
         if (order.Status != "paid") throw new ShopProblem(409, "Seule une commande payée peut être expédiée.");
         if (await db.Payments.AnyAsync(p => p.OrderId == id && p.AmountPaid > 0 && p.RefundedCents >= p.AmountPaid, ct))
             throw new ShopProblem(409, "Cette commande a déjà été intégralement remboursée.");
-        return true;
+        return order;
     }
 
     private static async Task<IResult> SetFulfillment(string id, StatusChangeInput input, ShopDb db, CancellationToken ct)
@@ -102,7 +107,7 @@ public static class ShopAdmin
         if (input.Status is not (OrderFulfillment.Preparing or OrderFulfillment.Shipped))
             throw new ShopProblem(400, "Choisis un état d’expédition.");
         await using var tx = await db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, ct);
-        if (!await LockPaidOrder(id, db, ct)) return Results.NotFound();
+        if (await LockPaidOrder(id, db, ct) == null) return Results.NotFound();
         var states = db.Set<OrderFulfillment>();
         var state = await states.FindAsync([id], ct);
         if (state?.Status == input.Status) return Results.NoContent();
@@ -122,7 +127,7 @@ public static class ShopAdmin
         var number = (input.Number ?? "").Trim();
         if (!Regex.IsMatch(number, "^[0-9]{6,20}$")) throw new ShopProblem(400, "Indique le numéro de suivi Mondial Relay (6 à 20 chiffres).");
         await using var tx = await db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, ct);
-        if (!await LockPaidOrder(id, db, ct)) return Results.NotFound();
+        if (await LockPaidOrder(id, db, ct) == null) return Results.NotFound();
         var shipment = await db.Shipments.FindAsync([id], ct);
         if (shipment is { Status: "ready" } && shipment.TrackingNumber == number) return Results.NoContent();
         if (shipment != null && (shipment.Status != "ready" || shipment.LabelUrl != null || shipment.TrackingNumber != input.Previous))

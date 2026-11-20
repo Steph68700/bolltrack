@@ -55,7 +55,11 @@ Dans le Dashboard Stripe de la boutique, ouvrir **Catalogue de produits → Coup
 
 ### Préparer une expédition
 
-Depuis le conteneur de la boutique, exécuter la commande ci-dessous pour une commande payée, avec les mesures du colis emballé. L’API 2 renvoie l’étiquette PDF et le numéro d’expédition. Le client retrouve ce numéro dans « Mon compte ». La variable `MondialRelay__Sandbox=true` sélectionne le serveur de test avec les identifiants correspondants.
+Dans **Administration → Commandes et retours**, ouvrir une commande payée à préparer, saisir le poids emballage compris en grammes et, si nécessaire, les dimensions en centimètres. **Générer l’étiquette et le suivi** crée l’envoi via l’API 2. **Ouvrir l’étiquette PDF** permet ensuite de l’imprimer ou de la réimprimer. Le client retrouve le numéro et le lien de suivi dans « Mon compte ». Une commande déjà expédiée, intégralement remboursée ou pourvue d’un suivi manuel ne peut pas générer une nouvelle étiquette.
+
+Le formulaire transmet au transporteur l’adresse e-mail enregistrée pour la commande. L’offre Start inclut l’e-mail Mondial Relay au client lors de la prise en charge. Marquer la commande « Expédiée » après avoir remis le colis. [Notifications de Mondial Relay](https://www.mondialrelay.fr/faq-pro/envoyer-un-colis/comment-mon-client-est-il-informe-de-la-mise-a-disposition-de-son-colis-et-a-t-il-un-suivi/)
+
+Le bouton s’active avec les réglages API 2, collecte et expéditeur du tableau ci-dessus. Dans Mondial Relay Connect, les valeurs se trouvent dans « Configuration des API → API Version V2.0 ». La variable `MondialRelay__Sandbox=true` sélectionne le serveur de test avec les identifiants correspondants. L’outil en ligne de commande utilise le même traitement.
 
 ```sh
 dotnet /app/Shop.dll etiquette ID_COMMANDE POIDS_G LONGUEUR_CM LARGEUR_CM HAUTEUR_CM
