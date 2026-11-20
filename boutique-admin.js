@@ -198,8 +198,14 @@
     form.querySelector('.weight-hint').textContent = suggestion.weightGrams != null
       ? 'Poids estimé à partir des articles et de l’emballage. Ajuste-le si le colis préparé diffère.'
       : 'Saisis le poids mesuré. Pour le préremplir, renseigne le poids des articles et de l’emballage dans les réglages.';
-    if (dimensions.every(name => suggestion[name] != null))
-      form.querySelector('summary').textContent = 'Dimensions du colis · '+dimensions.map(name=>suggestion[name]).join(' × ')+' cm';
+    const details = form.querySelector('details'), summary = details.querySelector('summary');
+    const dimensionsTitle = summary.textContent;
+    function showDimensions() {
+      const values = dimensions.map(name => fields[name].value);
+      summary.textContent = values.every(Boolean) ? 'Dimensions du colis · '+values.join(' × ')+' cm' : dimensionsTitle;
+    }
+    details.addEventListener('input',showDimensions);
+    showDimensions();
     form.querySelector('[type=submit]').disabled=!configured;
     submit(form,async()=>{
       const parcel={weightGrams:fields.weightGrams.valueAsNumber};
