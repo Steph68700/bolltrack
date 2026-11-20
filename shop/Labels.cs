@@ -11,7 +11,7 @@ namespace BollTrack;
 public record ParcelMeasurements(int WeightGrams, int? LengthCm, int? WidthCm, int? HeightCm);
 public record ShipmentLabel(string TrackingNumber, string LabelUrl);
 
-public class Labels(ShopDb db, IConfiguration config, IHttpClientFactory clients)
+public class Labels(ShopDb db, IConfiguration config, IHttpClientFactory clients, ILogger<Labels> logger)
 {
     private static readonly string[] RequiredSettings = [
         "Api2Login", "Api2Password", "Api2Client", "Expediteur:Nom", "Expediteur:Rue",
@@ -36,6 +36,7 @@ public class Labels(ShopDb db, IConfiguration config, IHttpClientFactory clients
         if (!Guid.TryParseExact(id, "N", out _)) throw new ShopProblem(400, "Référence de commande invalide.");
         var reference = id[..15].ToUpperInvariant();
         XElement document;
+        ShippingDetails details;
         var shipment = new Shipment { OrderId = id, Status = "processing" };
         await using (var tx = await db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, ct))
         {
@@ -50,11 +51,12 @@ public class Labels(ShopDb db, IConfiguration config, IHttpClientFactory clients
                 throw new ShopProblem(409, "Cette commande est déjà marquée comme expédiée.");
             if (!IsConfigured(config))
                 throw new ShopProblem(503, "Configure les accès API 2, la collecte et les coordonnées d’expéditeur Mondial Relay.");
-            var details = JsonSerializer.Deserialize<ShippingDetails>(order.DeliveryJson)
+            details = JsonSerializer.Deserialize<ShippingDetails>(order.DeliveryJson)
                 ?? throw new ShopProblem(409, "Coordonnées de livraison introuvables.");
-            if (parcel.WeightGrams < 10 || parcel.WeightGrams > (details.Locker == null ? 30000 : 25000)
-                || parcel.LengthCm is <= 0 || parcel.WidthCm is <= 0 || parcel.HeightCm is <= 0)
-                throw new ShopProblem(400, "Vérifie le poids du colis emballé (10 g minimum, 25 kg maximum en Locker, 30 kg à domicile) et les dimensions renseignées.");
+            if (parcel.WeightGrams is < 100 or > 25_000)
+                throw new ShopProblem(400, "Le poids du colis emballé doit être compris entre 100 et 25 000 g. Pour 0,5 kg, saisis 500.");
+            if (parcel.LengthCm is <= 0 || parcel.WidthCm is <= 0 || parcel.HeightCm is <= 0)
+                throw new ShopProblem(400, "Les dimensions renseignées doivent être supérieures à zéro, en centimètres.");
             document = BuildRequest(config, details, order, reference, parcel);
             db.Shipments.Add(shipment);
             await db.SaveChangesAsync(ct);
@@ -74,7 +76,7 @@ public class Labels(ShopDb db, IConfiguration config, IHttpClientFactory clients
             using var reader = XmlReader.Create(await response.Content.ReadAsStreamAsync(), new XmlReaderSettings {
                 DtdProcessing = DtdProcessing.Prohibit, MaxCharactersInDocument = 2000000
             });
-            var label = ReadLabel(XDocument.Load(reader));
+            var label = ReadLabel(XDocument.Load(reader), parcel.WeightGrams, details.CarrierMode);
             shipment.TrackingNumber = label.TrackingNumber;
             shipment.LabelUrl = label.LabelUrl;
             shipment.Status = "ready";
@@ -122,7 +124,7 @@ public class Labels(ShopDb db, IConfiguration config, IHttpClientFactory clients
                 E("Recipient", Address(recipient.Name, recipient.Street, recipient.Complement, recipient.Postcode, recipient.City, recipient.Phone, order.Email)))));
     }
 
-    private static ShipmentLabel ReadLabel(XDocument result)
+    private ShipmentLabel ReadLabel(XDocument result, int weightGrams, string deliveryMode)
     {
         XNamespace ns = "http://www.example.org/Response";
         if (result.Root?.Name != ns + "ShipmentCreationResponse") throw new ShopProblem(502, "Réponse Mondial Relay inattendue.");
@@ -137,6 +139,11 @@ public class Labels(ShopDb db, IConfiguration config, IHttpClientFactory clients
             && string.IsNullOrWhiteSpace(number) && !result.Descendants(ns + "Output").Any(o => !string.IsNullOrWhiteSpace(o.Value)))
         {
             var code = (string?)error?.Attribute("Code");
+            if (code == "10034")
+            {
+                logger.LogWarning("Mondial Relay 10034: {WeightGrams} g, mode {DeliveryMode}", weightGrams, deliveryMode);
+                throw new ShopProblem(422, $"Mondial Relay a refusé le poids déclaré de {weightGrams} g (code 10034). Vérifie le poids du colis emballé. Si la mesure correspond, vérifie les limites de ton offre dans Mondial Relay Connect.");
+            }
             var suffix = Regex.IsMatch(code ?? "", "^[A-Za-z0-9_-]{1,16}$") ? " (code " + code + ")" : "";
             throw new ShopProblem(422, "Mondial Relay a refusé l’étiquette" + suffix + ". Vérifie les informations du colis et du compte avant de réessayer.");
         }

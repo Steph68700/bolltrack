@@ -59,6 +59,8 @@ Dans **Administration → Colis par défaut**, enregistrer le poids de l’embal
 
 Le poids proposé pour une commande est la somme des poids unitaires multipliés par les quantités, plus un seul emballage. Si un poids unitaire manque et qu’aucun poids habituel ne le remplace, ou si l’emballage n’a pas été pesé, le champ reste à compléter. Chaque valeur proposée peut être corrigée pour cet envoi avant de générer l’étiquette.
 
+Saisir le poids du colis fermé en grammes. En France, l’offre Start accepte de 100 g à 25 kg en Locker et à domicile. Si Mondial Relay renvoie le code 10034, l’administration affiche le poids transmis. [Conditions de l’offre Start, § 2.1](https://www.mondialrelay.fr/cgv-professionnels/) · [Codes de l’API d’expédition, p. 21](https://www.mondialrelay.fr/media/123861/web-service-dual-carrier-v-27.pdf)
+
 Dans **Administration → Commandes et retours**, ouvrir une commande payée à préparer et vérifier le poids du colis emballé. **Générer l’étiquette et le suivi** crée l’envoi via l’API 2. **Ouvrir l’étiquette PDF** permet ensuite de l’imprimer ou de la réimprimer. Le client retrouve le numéro et le lien de suivi dans « Mon compte ». Une commande déjà expédiée, intégralement remboursée ou pourvue d’un suivi manuel ne peut pas générer une nouvelle étiquette.
 
 Le formulaire transmet au transporteur l’adresse e-mail enregistrée pour la commande. L’offre Start inclut l’e-mail Mondial Relay au client lors de la prise en charge. Marquer la commande « Expédiée » après avoir remis le colis. [Notifications de Mondial Relay](https://www.mondialrelay.fr/faq-pro/envoyer-un-colis/comment-mon-client-est-il-informe-de-la-mise-a-disposition-de-son-colis-et-a-t-il-un-suivi/)

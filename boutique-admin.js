@@ -192,7 +192,6 @@
   function labelForm(order, configured) {
     const form=$('shipment-label-form').content.firstElementChild.cloneNode(true);
     const fields=form.elements;
-    fields.weightGrams.max=order.delivery?.locker ? '25000' : '30000';
     const suggestion = order.suggestedParcel || {};
     for (const name of ['weightGrams',...dimensions]) fields[name].value = suggestion[name] ?? '';
     form.querySelector('.weight-hint').textContent = suggestion.weightGrams != null

@@ -6,7 +6,7 @@
   <title>Administration de la boutique · BollTrack</title>
   <link rel="icon" href="icon.jpg"><link rel="stylesheet" href="boutique-admin.css?v=20261120-colis">
   <script src="boutique-session.js?v=20261119" defer></script>
-  <script src="boutique-admin.js?v=20261120-colis-2" defer></script>
+  <script src="boutique-admin.js?v=20261120-poids" defer></script>
 </head>
 <body>
   <header><a class="brand" href="boutique.html">BollTrack</a><a href="boutique.html">Voir la boutique ↗</a></header>
@@ -56,7 +56,7 @@
         <template id="shipment-label-form">
           <form class="label-form">
             <h4>Étiquette Mondial Relay</h4>
-            <label>Poids du colis emballé (g)<input name="weightGrams" type="number" min="10" step="1" required></label>
+            <label>Poids du colis emballé (g)<input name="weightGrams" type="number" min="100" max="25000" step="1" required><small>De 100 g à 25 kg. Pour un colis de 0,5 kg, saisis 500.</small></label>
             <p class="weight-hint"></p>
             <details><summary>Dimensions du colis (facultatif)</summary>
               <div class="fields">
