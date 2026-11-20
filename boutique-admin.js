@@ -189,7 +189,7 @@
     submit(form,async()=>{await save(control.value);await loadOrders();notice('Commande mise à jour.');});
     return form;
   }
-  function labelForm(order, configured) {
+  function labelForm(order, configured, previewAvailable) {
     const form=$('shipment-label-form').content.firstElementChild.cloneNode(true);
     const fields=form.elements;
     const suggestion = order.suggestedParcel || {};
@@ -205,16 +205,53 @@
     }
     details.addEventListener('input',showDimensions);
     showDimensions();
-    form.querySelector('[type=submit]').disabled=!configured;
-    submit(form,async()=>{
+    const issueButton = form.querySelector('[type=submit]');
+    issueButton.disabled = !configured;
+    const refusal = form.querySelector('.carrier-refusal');
+    const testButton = form.querySelector('.test-label');
+    const preview = form.querySelector('.label-preview-result');
+    testButton.hidden = !previewAvailable;
+    function readParcel() {
       const parcel={weightGrams:fields.weightGrams.valueAsNumber};
       for(const name of dimensions) {
         if(fields[name].value) parcel[name]=fields[name].valueAsNumber;
       }
+      return parcel;
+    }
+    testButton.addEventListener('click', async () => {
+      if (testButton.disabled || (configured && issueButton.disabled) || !form.reportValidity()) return;
+      testButton.disabled = true;
+      issueButton.disabled = true;
+      refusal.hidden = true;
+      preview.hidden = false;
+      preview.textContent = 'Génération du PDF de test…';
+      const parcel = readParcel();
+      try {
+        const result = await api('etiquette-test', {parcel, lockerId:order.delivery?.locker?.id ?? null});
+        const link = el('a', 'Ouvrir le PDF de test ('+parcel.weightGrams+' g)');
+        link.href = result.labelUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        preview.replaceChildren(link, ' · Étiquette de démonstration, sans expédition ni facturation.');
+      } catch (error) {
+        preview.textContent = error.message;
+      } finally {
+        testButton.disabled = false;
+        issueButton.disabled = !configured;
+      }
+    });
+    submit(form,async()=>{
+      refusal.hidden = true;
+      preview.hidden = true;
       let label;
       try {
-        label=await api('commandes/'+encodeURIComponent(order.id)+'/etiquette',parcel);
+        label=await api('commandes/'+encodeURIComponent(order.id)+'/etiquette',readParcel());
       } catch(error) {
+        if(error.status===422) {
+          refusal.querySelector('p').textContent = error.message;
+          refusal.hidden = false;
+          return;
+        }
         if(error.status===409 || error.status===502) await loadOrders();
         throw error;
       }
@@ -223,7 +260,7 @@
     });
     return form;
   }
-  function orderView(o, labelsConfigured) {
+  function orderView(o, labelsConfigured, previewAvailable) {
     const article=el('article',undefined,'order'), recipient=o.delivery?.recipient || {}, locker=o.delivery?.locker;
     article.append(el('h3',date(o.createdUtc)+' · '+money(o.totalCents)),el('p','Commande '+o.id+' · '+(orderStatus[o.status] || o.status)));
     const list=el('ul');
@@ -254,7 +291,7 @@
     } else if(o.shippingStatus==='review' || o.shippingStatus==='processing') {
       article.append(el('p','Émission en cours ou à vérifier dans Mondial Relay Connect. Référence marchand : '+o.id.slice(0,15).toUpperCase()+'.'));
     } else if(o.canCreateLabel) {
-      article.append(labelForm(o,labelsConfigured));
+      article.append(labelForm(o,labelsConfigured,previewAvailable));
     }
     if(o.canSetTracking) {
       const number=el('input');number.inputMode='numeric';number.pattern='[0-9]{6,20}';number.required=true;number.value=o.tracking || '';
@@ -280,7 +317,7 @@
     if(version!==ordersVersion) return;
     $('label-setup').hidden=data.labelsConfigured;
     $('label-sandbox').hidden=!data.labelSandbox;
-    $('orders').replaceChildren(...data.orders.map(o=>orderView(o,data.labelsConfigured)));
+    $('orders').replaceChildren(...data.orders.map(o=>orderView(o,data.labelsConfigured,data.labelPreviewAvailable)));
     if(!data.orders.length) $('orders').textContent='Aucune commande pour ce filtre.';
     $('previous').disabled=page===0;$('next').disabled=!data.more;$('page').textContent='Page '+(page+1);
   }

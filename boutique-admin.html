@@ -6,7 +6,7 @@
   <title>Administration de la boutique · BollTrack</title>
   <link rel="icon" href="icon.jpg"><link rel="stylesheet" href="boutique-admin.css?v=20261120-colis">
   <script src="boutique-session.js?v=20261119" defer></script>
-  <script src="boutique-admin.js?v=20261120-poids" defer></script>
+  <script src="boutique-admin.js?v=20261120-essai" defer></script>
 </head>
 <body>
   <header><a class="brand" href="boutique.html">BollTrack</a><a href="boutique.html">Voir la boutique ↗</a></header>
@@ -66,6 +66,12 @@
               </div>
             </details>
             <button class="action" type="submit">Générer l’étiquette et le suivi</button>
+            <button type="button" class="test-label" hidden>Tester sans expédier</button>
+            <p class="label-preview-result" role="status" hidden></p>
+            <div class="carrier-refusal" role="alert" hidden>
+              <p></p>
+              <a href="https://connect.mondialrelay.com/" target="_blank" rel="noopener noreferrer">Ouvrir Mondial Relay Connect</a>
+            </div>
           </form>
         </template>
         <label>Afficher<select id="order-filter"><option value="preparer">À préparer ou à expédier</option><option value="expediees">Commandes expédiées</option><option value="toutes">Toutes les commandes</option><option value="retours">Demandes de retour</option></select></label>

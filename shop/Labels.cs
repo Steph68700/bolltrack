@@ -10,6 +10,7 @@ namespace BollTrack;
 
 public record ParcelMeasurements(int WeightGrams, int? LengthCm, int? WidthCm, int? HeightCm);
 public record ShipmentLabel(string TrackingNumber, string LabelUrl);
+public record LabelPreviewInput(ParcelMeasurements? Parcel, string? LockerId);
 
 public class Labels(ShopDb db, IConfiguration config, IHttpClientFactory clients, ILogger<Labels> logger)
 {
@@ -21,6 +22,38 @@ public class Labels(ShopDb db, IConfiguration config, IHttpClientFactory clients
     public static bool IsConfigured(IConfiguration config) =>
         config["MondialRelay:Collecte"] is "REL" or "CCC"
         && RequiredSettings.All(name => !string.IsNullOrWhiteSpace(config["MondialRelay:" + name]));
+
+    public static bool CanPreview(IConfiguration config)
+    {
+        var test = config.GetSection("MondialRelay:Test");
+        return new[] { "Api2Client", "Api2Login", "Api2Password" }.All(key => !string.IsNullOrWhiteSpace(test[key]))
+            && !string.Equals(test["Api2Login"], config["MondialRelay:Api2Login"], StringComparison.OrdinalIgnoreCase);
+    }
+
+    public async Task<string> Preview(LabelPreviewInput input, CancellationToken ct)
+    {
+        if (!CanPreview(config)) throw new ShopProblem(503, "Les accès de test Mondial Relay sont indisponibles.");
+        if (input.Parcel is not { } parcel) throw new ShopProblem(400, "Renseigne le poids du colis test.");
+        ValidateParcel(parcel);
+        if (input.LockerId is { } id && !Regex.IsMatch(id, "^[0-9]{6}$"))
+            throw new ShopProblem(400, "Identifiant de Locker invalide.");
+        var locker = input.LockerId is { } lockerId ? new Locker(lockerId, "", "", "", "") : null;
+        var recipient = new Delivery(locker == null ? "domicile" : "locker", "CLIENT TEST", "+33600000000",
+            "1 RUE DU TEST", "68000", "COLMAR", input.LockerId);
+        var details = new ShippingDetails(recipient, locker, "FR", locker == null ? "HOM" : "24R");
+        var reference = "BT" + Guid.NewGuid().ToString("N")[..12].ToUpperInvariant();
+        var document = BuildRequest(details, "buyer@example.invalid", 2000, reference, parcel, preview: true);
+        var response = await SendRequest(document, sandbox: true, ct);
+        return ReadLabel(response, parcel.WeightGrams, details.CarrierMode, reference, preview: true).LabelUrl;
+    }
+
+    private static void ValidateParcel(ParcelMeasurements parcel)
+    {
+        if (parcel.WeightGrams is < 100 or > 25_000)
+            throw new ShopProblem(400, "Le poids du colis emballé doit être compris entre 100 et 25 000 g. Pour 0,5 kg, saisis 500.");
+        if (parcel.LengthCm is <= 0 || parcel.WidthCm is <= 0 || parcel.HeightCm is <= 0)
+            throw new ShopProblem(400, "Les dimensions renseignées doivent être supérieures à zéro, en centimètres.");
+    }
 
     public async Task RunCommand(string[] args)
     {
@@ -53,11 +86,8 @@ public class Labels(ShopDb db, IConfiguration config, IHttpClientFactory clients
                 throw new ShopProblem(503, "Configure les accès API 2, la collecte et les coordonnées d’expéditeur Mondial Relay.");
             details = JsonSerializer.Deserialize<ShippingDetails>(order.DeliveryJson)
                 ?? throw new ShopProblem(409, "Coordonnées de livraison introuvables.");
-            if (parcel.WeightGrams is < 100 or > 25_000)
-                throw new ShopProblem(400, "Le poids du colis emballé doit être compris entre 100 et 25 000 g. Pour 0,5 kg, saisis 500.");
-            if (parcel.LengthCm is <= 0 || parcel.WidthCm is <= 0 || parcel.HeightCm is <= 0)
-                throw new ShopProblem(400, "Les dimensions renseignées doivent être supérieures à zéro, en centimètres.");
-            document = BuildRequest(config, details, order, reference, parcel);
+            ValidateParcel(parcel);
+            document = BuildRequest(details, order.Email, order.TotalCents - order.ShippingCents, reference, parcel);
             db.Shipments.Add(shipment);
             await db.SaveChangesAsync(ct);
             await tx.CommitAsync(ct);
@@ -66,17 +96,8 @@ public class Labels(ShopDb db, IConfiguration config, IHttpClientFactory clients
         // Once the attempt is recorded, finish it even if the browser closes.
         try
         {
-            var host = config.GetValue<bool>("MondialRelay:Sandbox") ? "connect-api-sandbox.mondialrelay.com" : "connect-api.mondialrelay.com";
-            using var req = new HttpRequestMessage(HttpMethod.Post, "https://" + host + "/api/shipment");
-            req.Headers.Accept.ParseAdd("application/xml");
-            req.Content = new StringContent(document.ToString(), Encoding.UTF8, "text/xml");
-            using var client = clients.CreateClient("carrier");
-            using var response = await client.SendAsync(req);
-            response.EnsureSuccessStatusCode();
-            using var reader = XmlReader.Create(await response.Content.ReadAsStreamAsync(), new XmlReaderSettings {
-                DtdProcessing = DtdProcessing.Prohibit, MaxCharactersInDocument = 2000000
-            });
-            var label = ReadLabel(XDocument.Load(reader), parcel.WeightGrams, details.CarrierMode);
+            var response = await SendRequest(document, config.GetValue<bool>("MondialRelay:Sandbox"), CancellationToken.None);
+            var label = ReadLabel(response, parcel.WeightGrams, details.CarrierMode, reference);
             shipment.TrackingNumber = label.TrackingNumber;
             shipment.LabelUrl = label.LabelUrl;
             shipment.Status = "ready";
@@ -97,7 +118,22 @@ public class Labels(ShopDb db, IConfiguration config, IHttpClientFactory clients
         }
     }
 
-    private static XElement BuildRequest(IConfiguration config, ShippingDetails details, ShopOrder order, string reference, ParcelMeasurements parcel)
+    private async Task<XDocument> SendRequest(XElement document, bool sandbox, CancellationToken ct)
+    {
+        var host = sandbox ? "connect-api-sandbox.mondialrelay.com" : "connect-api.mondialrelay.com";
+        using var req = new HttpRequestMessage(HttpMethod.Post, "https://" + host + "/api/shipment");
+        req.Headers.Accept.ParseAdd("application/xml");
+        req.Content = new StringContent(document.ToString(), Encoding.UTF8, "text/xml");
+        using var client = clients.CreateClient("carrier");
+        using var response = await client.SendAsync(req, ct);
+        response.EnsureSuccessStatusCode();
+        using var reader = XmlReader.Create(await response.Content.ReadAsStreamAsync(ct), new XmlReaderSettings {
+            DtdProcessing = DtdProcessing.Prohibit, MaxCharactersInDocument = 2000000
+        });
+        return XDocument.Load(reader);
+    }
+
+    private XElement BuildRequest(ShippingDetails details, string email, int goodsCents, string reference, ParcelMeasurements parcel, bool preview = false)
     {
         XNamespace ns = "http://www.example.org/Request";
         XElement E(string name, params object?[] content) => new(ns + name, content);
@@ -108,49 +144,74 @@ public class Labels(ShopDb db, IConfiguration config, IHttpClientFactory clients
                 E("AddressAdd1", name), E("AddressAdd3", complement ?? ""), E("PhoneNo", Shipping.NormalizePhone(phone)), E("Email", mail));
 
         var relay = config.GetSection("MondialRelay");
+        var credentials = preview ? relay.GetSection("Test") : relay;
         var sender = relay.GetSection("Expediteur");
         var recipient = details.Recipient;
+        var senderAddress = preview
+            ? Address("ASSOCIATION TEST", "1 RUE DU TEST", null, "68000", "COLMAR", "+33300000000", "sender@example.invalid")
+            : Address(sender["Nom"], sender["Rue"], sender["Complement"], sender["CodePostal"], sender["Ville"], sender["Telephone"], sender["Email"]);
         return E("ShipmentCreationRequest",
-            E("Context", E("Login", relay["Api2Login"]), E("Password", relay["Api2Password"]), E("CustomerId", relay["Api2Client"]),
+            E("Context", E("Login", credentials["Api2Login"]), E("Password", credentials["Api2Password"]), E("CustomerId", credentials["Api2Client"]),
                 E("Culture", "fr-FR"), E("VersionAPI", "1.0")),
             E("OutputOptions", E("OutputFormat", "10x15"), E("OutputType", "PdfUrl")),
             E("ShipmentsList", E("Shipment", E("OrderNo", reference), E("ParcelCount", 1),
-                E("ShipmentValue", new XAttribute("Amount", (order.TotalCents - order.ShippingCents) / 100m)),
+                E("ShipmentValue", new XAttribute("Amount", goodsCents / 100m), new XAttribute("Currency", "EUR")),
                 E("DeliveryMode", new XAttribute("Mode", details.CarrierMode), new XAttribute("Location", details.Locker is {} l ? "FR-" + l.Id : "")),
-                E("CollectionMode", new XAttribute("Mode", relay["Collecte"]!), new XAttribute("Location", relay["LieuCollecte"] ?? "")),
+                E("CollectionMode", new XAttribute("Mode", preview ? "REL" : relay["Collecte"]!), new XAttribute("Location", preview ? "" : relay["LieuCollecte"] ?? "")),
                 E("Parcels", E("Parcel", E("Content", "Merchandising BollTrack"), Measure("Length", parcel.LengthCm, "cm"),
                     Measure("Width", parcel.WidthCm, "cm"), Measure("Depth", parcel.HeightCm, "cm"), Measure("Weight", parcel.WeightGrams, "gr"))),
-                E("Sender", Address(sender["Nom"], sender["Rue"], sender["Complement"], sender["CodePostal"], sender["Ville"], sender["Telephone"], sender["Email"])),
-                E("Recipient", Address(recipient.Name, recipient.Street, recipient.Complement, recipient.Postcode, recipient.City, recipient.Phone, order.Email)))));
+                E("Sender", senderAddress),
+                E("Recipient", Address(recipient.Name, recipient.Street, recipient.Complement, recipient.Postcode, recipient.City, recipient.Phone, email)))));
     }
 
-    private ShipmentLabel ReadLabel(XDocument result, int weightGrams, string deliveryMode)
+    private ShipmentLabel ReadLabel(XDocument result, int weightGrams, string deliveryMode, string reference, bool preview = false)
     {
         XNamespace ns = "http://www.example.org/Response";
         if (result.Root?.Name != ns + "ShipmentCreationResponse") throw new ShopProblem(502, "Réponse Mondial Relay inattendue.");
         var record = result.Root.Element(ns + "ShipmentsList")?.Elements(ns + "Shipment").SingleOrDefault();
         var number = (string?)record?.Attribute("ShipmentNumber");
         var raw = (string?)record?.Descendants(ns + "Output").SingleOrDefault();
-        var error = result.Descendants(ns + "Status").FirstOrDefault(s => {
-            var level = (string?)s.Attribute("Level") ?? "";
-            return level.Equals("Error", StringComparison.OrdinalIgnoreCase) || level.StartsWith("Critical", StringComparison.OrdinalIgnoreCase);
-        });
-        if (string.Equals((string?)error?.Attribute("Level"), "Error", StringComparison.OrdinalIgnoreCase)
-            && string.IsNullOrWhiteSpace(number) && !result.Descendants(ns + "Output").Any(o => !string.IsNullOrWhiteSpace(o.Value)))
-        {
-            var code = (string?)error?.Attribute("Code");
-            if (code == "10034")
-            {
-                logger.LogWarning("Mondial Relay 10034: {WeightGrams} g, mode {DeliveryMode}", weightGrams, deliveryMode);
-                throw new ShopProblem(422, $"Mondial Relay a refusé le poids déclaré de {weightGrams} g (code 10034). Vérifie le poids du colis emballé. Si la mesure correspond, vérifie les limites de ton offre dans Mondial Relay Connect.");
-            }
-            var suffix = Regex.IsMatch(code ?? "", "^[A-Za-z0-9_-]{1,16}$") ? " (code " + code + ")" : "";
-            throw new ShopProblem(422, "Mondial Relay a refusé l’étiquette" + suffix + ". Vérifie les informations du colis et du compte avant de réessayer.");
-        }
-        if (error != null || !Regex.IsMatch(number ?? "", "^[0-9]{6,20}$") || !Uri.TryCreate(raw, UriKind.Absolute, out var url)
-            || (url.Scheme != "https" && url.Scheme != "http") || !url.IsDefaultPort || url.UserInfo.Length != 0
-            || !url.Host.EndsWith(".mondialrelay.com", StringComparison.OrdinalIgnoreCase))
+        var statuses = result.Descendants(ns + "Status").ToList();
+        if (statuses.Any(s => ((string?)s.Attribute("Level"))?.StartsWith("Critical", StringComparison.OrdinalIgnoreCase) == true))
             throw new ShopProblem(502, "Étiquette non confirmée.");
-        return new(number!, new UriBuilder(url) { Scheme = "https", Port = -1 }.Uri.AbsoluteUri);
+        var errors = statuses.Where(s => string.Equals((string?)s.Attribute("Level"), "Error", StringComparison.OrdinalIgnoreCase)).ToList();
+        if (errors.Count > 0)
+        {
+            if (!string.IsNullOrWhiteSpace(number) || result.Descendants(ns + "Output").Any(o => !string.IsNullOrWhiteSpace(o.Value)))
+                throw new ShopProblem(502, "Étiquette non confirmée.");
+            var reasons = errors.Select(s => {
+                var code = (string?)s.Attribute("Code") ?? "";
+                return (Code: Regex.IsMatch(code, @"^[0-9]{1,5}$") ? code : "", Message: CarrierMessage((string?)s.Attribute("Message")));
+            }).Distinct().ToList();
+            logger.LogWarning("Refus Mondial Relay {Codes}, commande {Reference}, {WeightGrams} g, mode {DeliveryMode}",
+                string.Join(", ", reasons.Select(r => r.Code).Distinct()), reference, weightGrams, deliveryMode);
+            var lines = reasons.Take(8).Select(r => string.Join(" · ", new[] { r.Code, r.Message }.Where(v => !string.IsNullOrEmpty(v))))
+                .Where(line => line.Length > 0);
+            var route = deliveryMode == "24R" ? "Locker" : "domicile";
+            throw new ShopProblem(422, string.Join(" ", new[] {
+                $"Mondial Relay a refusé l’étiquette ({weightGrams} g, {route}).", string.Join(" / ", lines),
+                $"Référence marchand {reference}."
+            }.Where(text => text.Length > 0)));
+        }
+        if ((!preview && !Regex.IsMatch(number ?? "", "^[0-9]{6,20}$")) || !Uri.TryCreate(raw, UriKind.Absolute, out var url)
+            || (url.Scheme != "https" && url.Scheme != "http") || !url.IsDefaultPort || url.UserInfo.Length != 0
+            || !url.Host.EndsWith(".mondialrelay.com", StringComparison.OrdinalIgnoreCase)
+            || (preview && !url.Host.Equals("connect-sandbox.mondialrelay.com", StringComparison.OrdinalIgnoreCase)))
+            throw new ShopProblem(502, "Étiquette non confirmée.");
+        return new(number ?? "", new UriBuilder(url) { Scheme = "https", Port = -1 }.Uri.AbsoluteUri);
+    }
+
+    private string? CarrierMessage(string? message)
+    {
+        message = message?.Trim();
+        if (string.IsNullOrEmpty(message) || message.Length > 300 || message.Any(char.IsControl) || !message.Contains(' ')
+            || Regex.IsMatch(message, @"[<>{}@]|https?://|\d{10,}", RegexOptions.IgnoreCase))
+            return null;
+        foreach (var key in new[] { "Api2Password", "Api2Login", "Api2Client", "ClePrivee", "Test:Api2Password", "Test:Api2Client" })
+        {
+            var value = config["MondialRelay:" + key];
+            if (!string.IsNullOrEmpty(value) && message.Contains(value, StringComparison.OrdinalIgnoreCase)) return null;
+        }
+        return message;
     }
 }

@@ -42,6 +42,8 @@ public static class ShopAdmin
         admin.MapPost("/colis-par-defaut", ParcelDefaults.Save);
         admin.MapPost("/commandes/{id}/etiquette", async (string id, ParcelMeasurements parcel, Labels labels, CancellationToken ct) =>
             Results.Ok(await labels.Issue(id, parcel, ct)));
+        admin.MapPost("/etiquette-test", async (LabelPreviewInput input, Labels labels, CancellationToken ct) =>
+            Results.Ok(new { labelUrl = await labels.Preview(input, ct) })).RequireRateLimiting("carrier");
         admin.MapPost("/commandes/{id}/suivi", SetTracking);
         admin.MapPost("/commandes/{id}/expedition", SetFulfillment);
         admin.MapPost("/commandes/{id}/retour", SetReturnStatus);
@@ -66,8 +68,9 @@ public static class ShopAdmin
         var more = orders.Count > pageSize;
         if (more) orders.RemoveAt(pageSize);
         var labelsConfigured = Labels.IsConfigured(config);
+        var labelPreviewAvailable = Labels.CanPreview(config);
         var labelSandbox = config.GetValue<bool>("MondialRelay:Sandbox");
-        if (orders.Count == 0) return Results.Ok(new { more = false, labelsConfigured, labelSandbox, orders = Array.Empty<object>() });
+        if (orders.Count == 0) return Results.Ok(new { more = false, labelsConfigured, labelPreviewAvailable, labelSandbox, orders = Array.Empty<object>() });
         var ids = orders.Select(o => o.Id).ToArray();
         var notices = await db.Withdrawals.AsNoTracking().Where(n => ids.Contains(n.OrderId)).OrderByDescending(n => n.SubmittedUtc)
             .Select(n => new { n.OrderId, n.FirstName, n.LastName, n.Details, n.SubmittedUtc }).ToListAsync(ct);
@@ -79,7 +82,7 @@ public static class ShopAdmin
         var productIds = orders.SelectMany(o => o.Lines).Select(l => l.ProductId).Distinct().ToArray();
         var productWeights = productIds.Length == 0 ? new Dictionary<string, int>() : await db.ShippingWeights.AsNoTracking()
             .Where(w => productIds.Contains(w.ProductId)).ToDictionaryAsync(w => w.ProductId, w => w.WeightGrams, ct);
-        return Results.Ok(new { more, labelsConfigured, labelSandbox, orders = orders.Select(o => {
+        return Results.Ok(new { more, labelsConfigured, labelPreviewAvailable, labelSandbox, orders = orders.Select(o => {
             var pay = payments.GetValueOrDefault(o.Id);
             var shipment = shipments.GetValueOrDefault(o.Id);
             var request = returns.GetValueOrDefault(o.Id);

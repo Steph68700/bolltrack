@@ -31,6 +31,7 @@ Renseigner les valeurs propres à l’association dans les variables du service 
 | `MondialRelay__DomicileCents` | `750` pour une livraison à 7,50 € par commande à domicile |
 | `MondialRelay__DomicileActif` | `true` lorsque le contrat couvre la livraison à domicile en France |
 | `MondialRelay__Api2Login`, `MondialRelay__Api2Password`, `MondialRelay__Api2Client` | Identifiants API 2 Mondial Relay Connect pour les étiquettes |
+| `MondialRelay__Test__Api2Login`, `MondialRelay__Test__Api2Password`, `MondialRelay__Test__Api2Client` | Identifiants de la colonne « Vos paramètres de test » de l’API 2 pour le bouton « Tester sans expédier » |
 | `MondialRelay__Collecte`, `MondialRelay__LieuCollecte` | Mode du contrat, REL ou CCC, et code de lieu si nécessaire |
 | `MondialRelay__Expediteur__Nom`, `__Rue`, `__CodePostal`, `__Ville`, `__Telephone`, `__Email` | Chaque suffixe est précédé de `MondialRelay__Expediteur`. `__Complement` est facultatif. |
 
@@ -59,7 +60,9 @@ Dans **Administration → Colis par défaut**, enregistrer le poids de l’embal
 
 Le poids proposé pour une commande est la somme des poids unitaires multipliés par les quantités, plus un seul emballage. Si un poids unitaire manque et qu’aucun poids habituel ne le remplace, ou si l’emballage n’a pas été pesé, le champ reste à compléter. Chaque valeur proposée peut être corrigée pour cet envoi avant de générer l’étiquette.
 
-Saisir le poids du colis fermé en grammes. En France, l’offre Start accepte de 100 g à 25 kg en Locker et à domicile. Si Mondial Relay renvoie le code 10034, l’administration affiche le poids transmis. [Conditions de l’offre Start, § 2.1](https://www.mondialrelay.fr/cgv-professionnels/) · [Codes de l’API d’expédition, p. 21](https://www.mondialrelay.fr/media/123861/web-service-dual-carrier-v-27.pdf)
+Saisir le poids du colis fermé en grammes. En France, l’offre Start accepte de 100 g à 25 kg en Locker et à domicile. En cas de refus, le formulaire affiche le poids transmis, les motifs communiqués par Mondial Relay et la référence marchand à indiquer au support. [Conditions de l’offre Start, § 2.1](https://www.mondialrelay.fr/cgv-professionnels/) · [Codes de l’API d’expédition, p. 21](https://www.mondialrelay.fr/media/123861/web-service-dual-carrier-v-27.pdf)
+
+**Tester sans expédier** génère un PDF de démonstration sur le serveur de test Mondial Relay avec le poids saisi, le mode de livraison et, le cas échéant, le Locker choisi. L’essai utilise des coordonnées fictives et une référence de test indépendante de la commande.
 
 Dans **Administration → Commandes et retours**, ouvrir une commande payée à préparer et vérifier le poids du colis emballé. **Générer l’étiquette et le suivi** crée l’envoi via l’API 2. **Ouvrir l’étiquette PDF** permet ensuite de l’imprimer ou de la réimprimer. Le client retrouve le numéro et le lien de suivi dans « Mon compte ». Une commande déjà expédiée, intégralement remboursée ou pourvue d’un suivi manuel ne peut pas générer une nouvelle étiquette.
 
