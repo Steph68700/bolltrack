@@ -6,8 +6,9 @@ using Microsoft.EntityFrameworkCore;
 namespace BollTrack;
 
 public record VariantQuantity(string SizeCode, int Quantity);
+public record ProductShipping(int? UnitWeightGrams);
 public record ProductEdit(int Revision, string Name, int PriceCents, string Category, string? Collection,
-    string? Color, string? Fit, bool Published, string? Photo, List<VariantQuantity>? InitialStock);
+    string? Color, string? Fit, bool Published, string? Photo, List<VariantQuantity>? InitialStock, ProductShipping? Shipping = null);
 public record StockChange(string OperationId, string SizeCode, int Delta, string Reason);
 
 public static class Catalog
@@ -21,6 +22,8 @@ public static class Catalog
             .Select(l => new {
                 id = l.ProductId, l.Product.Name, l.Product.PriceCents, l.Category,
                 collection = l.CollectionName, l.Color, l.Fit, l.Published, l.Revision,
+                unitWeightGrams = includeHidden ? db.ShippingWeights.Where(w => w.ProductId == l.ProductId)
+                    .Select(w => (int?)w.WeightGrams).FirstOrDefault() : null,
                 image = l.PhotoVersion == null ? l.StaticImage : "/api/catalogue/" + l.ProductId + "/photo?v=" + l.PhotoVersion,
                 sizes = l.Product.Sizes.OrderBy(s => s.SizeCode).Select(s => new { s.SizeCode, s.Available }).ToList()
             }).ToListAsync(ct);
@@ -82,6 +85,8 @@ public static class Catalog
         var color = Text(input.Color, 40, "Couleur", false);
         var fit = Text(input.Fit, 32, "Coupe", false);
         var photo = DecodePhoto(input.Photo);
+        if (input.Shipping?.UnitWeightGrams is < 1 or > 30000)
+            throw new ShopProblem(400, "Le poids d’un article doit être compris entre 1 et 30 000 g.");
         var initial = input.InitialStock ?? [];
         if (initial.Count > 30 || (!creating && initial.Count != 0)) throw new ShopProblem(400, "Vérifie les variantes du produit.");
         var quantities = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -118,6 +123,19 @@ public static class Catalog
             product.Sizes.Add(new Stock { ProductId = id, SizeCode = size, Available = count });
         if (photo != null) listing.PhotoVersion = Guid.NewGuid().ToString("N");
         await db.SaveChangesAsync(ct);
+        if (input.Shipping is { } shipping)
+        {
+            var stored = await db.ShippingWeights.FindAsync([id], ct);
+            if (shipping.UnitWeightGrams is int grams)
+            {
+                if (stored == null)
+                    db.ShippingWeights.Add(new ProductShippingWeight { ProductId = id, WeightGrams = grams });
+                else
+                    stored.WeightGrams = grams;
+            }
+            else if (stored != null)
+                db.ShippingWeights.Remove(stored);
+        }
         foreach (var (size, count) in quantities.Where(q => q.Value > 0))
             db.Movements.Add(Movement(Guid.NewGuid().ToString("N"), id, size, count, count, "Stock initial", user));
         if (photo is { } image)

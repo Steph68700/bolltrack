@@ -55,7 +55,11 @@ Dans le Dashboard Stripe de la boutique, ouvrir **Catalogue de produits → Coup
 
 ### Préparer une expédition
 
-Dans **Administration → Commandes et retours**, ouvrir une commande payée à préparer, saisir le poids emballage compris en grammes et, si nécessaire, les dimensions en centimètres. **Générer l’étiquette et le suivi** crée l’envoi via l’API 2. **Ouvrir l’étiquette PDF** permet ensuite de l’imprimer ou de la réimprimer. Le client retrouve le numéro et le lien de suivi dans « Mon compte ». Une commande déjà expédiée, intégralement remboursée ou pourvue d’un suivi manuel ne peut pas générer une nouvelle étiquette.
+Dans **Administration → Colis par défaut**, enregistrer le poids de l’emballage vide, un poids habituel par article et, si utile, les dimensions extérieures du colis fermé en centimètres. Une fiche **Produits** peut préciser un poids unitaire hors emballage. Cette valeur est prioritaire sur le poids habituel.
+
+Le poids proposé pour une commande est la somme des poids unitaires multipliés par les quantités, plus un seul emballage. Si un poids unitaire manque et qu’aucun poids habituel ne le remplace, ou si l’emballage n’a pas été pesé, le champ reste à compléter. Chaque valeur proposée peut être corrigée pour cet envoi avant de générer l’étiquette.
+
+Dans **Administration → Commandes et retours**, ouvrir une commande payée à préparer et vérifier le poids du colis emballé. **Générer l’étiquette et le suivi** crée l’envoi via l’API 2. **Ouvrir l’étiquette PDF** permet ensuite de l’imprimer ou de la réimprimer. Le client retrouve le numéro et le lien de suivi dans « Mon compte ». Une commande déjà expédiée, intégralement remboursée ou pourvue d’un suivi manuel ne peut pas générer une nouvelle étiquette.
 
 Le formulaire transmet au transporteur l’adresse e-mail enregistrée pour la commande. L’offre Start inclut l’e-mail Mondial Relay au client lors de la prise en charge. Marquer la commande « Expédiée » après avoir remis le colis. [Notifications de Mondial Relay](https://www.mondialrelay.fr/faq-pro/envoyer-un-colis/comment-mon-client-est-il-informe-de-la-mise-a-disposition-de-son-colis-et-a-t-il-un-suivi/)
 

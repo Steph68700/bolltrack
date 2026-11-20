@@ -38,6 +38,8 @@ public static class ShopAdmin
                    select new { m.ProductId, name = p.Name, m.SizeCode, m.Delta, m.BalanceAfter, m.Reason, m.CreatedUtc }
                 ).Take(100).ToListAsync(ct));
         admin.MapGet("/commandes", Orders);
+        admin.MapGet("/colis-par-defaut", ParcelDefaults.Read);
+        admin.MapPost("/colis-par-defaut", ParcelDefaults.Save);
         admin.MapPost("/commandes/{id}/etiquette", async (string id, ParcelMeasurements parcel, Labels labels, CancellationToken ct) =>
             Results.Ok(await labels.Issue(id, parcel, ct)));
         admin.MapPost("/commandes/{id}/suivi", SetTracking);
@@ -73,6 +75,10 @@ public static class ShopAdmin
         var payments = await db.Payments.AsNoTracking().Where(p => ids.Contains(p.OrderId)).ToDictionaryAsync(p => p.OrderId, ct);
         var shipments = await db.Shipments.AsNoTracking().Where(s => ids.Contains(s.OrderId)).ToDictionaryAsync(s => s.OrderId, ct);
         var returns = await db.Returns.AsNoTracking().Where(r => ids.Contains(r.OrderId)).ToDictionaryAsync(r => r.OrderId, ct);
+        var parcelDefaults = await ParcelDefaults.Read(db, ct);
+        var productIds = orders.SelectMany(o => o.Lines).Select(l => l.ProductId).Distinct().ToArray();
+        var productWeights = productIds.Length == 0 ? new Dictionary<string, int>() : await db.ShippingWeights.AsNoTracking()
+            .Where(w => productIds.Contains(w.ProductId)).ToDictionaryAsync(w => w.ProductId, w => w.WeightGrams, ct);
         return Results.Ok(new { more, labelsConfigured, labelSandbox, orders = orders.Select(o => {
             var pay = payments.GetValueOrDefault(o.Id);
             var shipment = shipments.GetValueOrDefault(o.Id);
@@ -82,6 +88,8 @@ public static class ShopAdmin
             return new { o.Id, o.CreatedUtc, o.Email, o.Status, withdrawals = byOrder[o.Id], delivery, o.ShippingCents,
                 totalCents = pay?.AmountPaid ?? o.TotalCents, refundedCents = pay?.RefundedCents ?? 0,
                 tracking = shipment?.TrackingNumber, shippingStatus = shipment?.Status, labelUrl = shipment?.LabelUrl,
+                suggestedParcel = new { weightGrams = parcelDefaults.EstimateWeight(o.Lines, productWeights),
+                    parcelDefaults.LengthCm, parcelDefaults.WidthCm, parcelDefaults.HeightCm },
                 canCreateLabel = canManageShipping && shipment == null && o.Fulfillment?.Status != OrderFulfillment.Shipped,
                 fulfillmentStatus = o.Fulfillment?.Status, canSetFulfillment = canManageShipping,
                 canSetTracking = canManageShipping

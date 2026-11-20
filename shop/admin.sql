@@ -17,6 +17,21 @@ CREATE TABLE IF NOT EXISTS product_photos (
     Bytes mediumblob NOT NULL,
     FOREIGN KEY (ProductId) REFERENCES products(Id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS product_shipping_weights (
+    ProductId varchar(64) PRIMARY KEY,
+    WeightGrams int NOT NULL CHECK (WeightGrams BETWEEN 1 AND 30000),
+    FOREIGN KEY (ProductId) REFERENCES products(Id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS parcel_defaults (
+    Id int PRIMARY KEY CHECK (Id = 1),
+    Revision int NOT NULL DEFAULT 0,
+    UnitWeightGrams int CHECK (UnitWeightGrams BETWEEN 1 AND 30000),
+    PackagingGrams int CHECK (PackagingGrams BETWEEN 0 AND 30000),
+    LengthCm int CHECK (LengthCm > 0),
+    WidthCm int CHECK (WidthCm > 0),
+    HeightCm int CHECK (HeightCm > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+INSERT IGNORE INTO parcel_defaults (Id) VALUES (1);
 CREATE TABLE IF NOT EXISTS stock_movements (
     Seq bigint NOT NULL AUTO_INCREMENT PRIMARY KEY,
     OperationId char(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL UNIQUE,

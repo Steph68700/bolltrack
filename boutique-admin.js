@@ -17,6 +17,12 @@
   const uuid = () => crypto.randomUUID().replaceAll('-','');
   const endpoint = '/api/admin/';
   const productForm = $('product-form'), stockForm = $('stock-form');
+  const defaultsForm = $('parcel-defaults');
+  const dimensions = ['lengthCm','widthCm','heightCm'];
+  const defaultFields = ['unitWeightGrams','packagingGrams',...dimensions];
+  const optionalNumber = field => field.value === '' ? null : field.valueAsNumber;
+  const reloadDefaults = $('reload-defaults');
+  let defaultsRevision = null;
   let products = [], edited = null, newId = '', page = 0, ordersVersion = 0, stockVersion = 0, pendingStock, previewUrl;
   let productRevision = 0;
   const notice = s => { $('feedback').textContent = s; };
@@ -86,6 +92,7 @@
     for(const key of ['name','collection','color','fit']) fields.namedItem(key).value=edited?.[key] || '';
     fields.category.value=edited?.category || 'tshirts';
     fields.price.value=edited ? (edited.priceCents/100).toFixed(2) : '';
+    fields.unitWeightGrams.value=edited?.unitWeightGrams ?? '';
     fields.published.checked=edited?.published ?? false;
     $('initial').hidden=!!edited;$('initial').disabled=!!edited;
     $('initial-rows').replaceChildren();
@@ -115,7 +122,8 @@
   submit(productForm,async()=>{
     const f=productForm.elements, id=edited?.id || newId;
     const body={revision:productRevision,name:f.namedItem('name').value,category:f.category.value,collection:f.collection.value,color:f.color.value,fit:f.fit.value,
-      priceCents:Math.round(f.price.valueAsNumber*100),published:f.published.checked,photo:await photoData(f.photo.files[0])};
+      priceCents:Math.round(f.price.valueAsNumber*100),published:f.published.checked,photo:await photoData(f.photo.files[0]),
+      shipping:{unitWeightGrams:optionalNumber(f.unitWeightGrams)}};
     if(!edited) body.initialStock=[...$('initial-rows').children].map(r=>({sizeCode:r.querySelector('[name=size]').value,quantity:r.querySelector('[name=count]').valueAsNumber}));
     await api('produits/'+encodeURIComponent(id),body);
     await loadProducts();edit(id);notice('Fiche produit enregistrée.');
@@ -150,6 +158,31 @@
   const orderStatus={paid:'Payée',pending:'Paiement en attente',expired:'Paiement clôturé'};
   const fulfillmentLabels={preparing:'En préparation',shipped:'Expédiée'};
   const returnStatus={requested:'Demande reçue',processing:'En cours',received:'Articles reçus',closed:'Dossier clôturé'};
+  async function loadParcelDefaults() {
+    if (reloadDefaults.disabled) return;
+    reloadDefaults.disabled = true;
+    const controls = defaultsForm.querySelectorAll('fieldset, button');
+    for (const control of controls) control.disabled = true;
+    try {
+      const settings = await api('colis-par-defaut');
+      defaultsRevision = settings.revision;
+      for (const name of defaultFields) defaultsForm.elements[name].value = settings[name] ?? '';
+    } finally {
+      reloadDefaults.disabled = false;
+      for (const control of controls) control.disabled = defaultsRevision === null;
+    }
+  }
+  reloadDefaults.addEventListener('click',handled(loadParcelDefaults));
+  submit(defaultsForm,async()=>{
+    const body = {revision:defaultsRevision};
+    for (const name of defaultFields) body[name] = optionalNumber(defaultsForm.elements[name]);
+    reloadDefaults.disabled = true;
+    try {
+      const saved = await api('colis-par-defaut',body);
+      defaultsRevision = saved.revision;
+      notice('Valeurs par défaut enregistrées.');
+    } finally { reloadDefaults.disabled = false; }
+  });
   function orderForm(label,control,action,save) {
     const form=el('form'), field=el('label',label), btn=el('button',action);
     btn.type='submit';field.append(control);form.append(field,btn);
@@ -160,10 +193,17 @@
     const form=$('shipment-label-form').content.firstElementChild.cloneNode(true);
     const fields=form.elements;
     fields.weightGrams.max=order.delivery?.locker ? '25000' : '30000';
+    const suggestion = order.suggestedParcel || {};
+    for (const name of ['weightGrams',...dimensions]) fields[name].value = suggestion[name] ?? '';
+    form.querySelector('.weight-hint').textContent = suggestion.weightGrams != null
+      ? 'Poids estimé à partir des articles et de l’emballage. Ajuste-le si le colis préparé diffère.'
+      : 'Saisis le poids mesuré. Pour le préremplir, renseigne le poids des articles et de l’emballage dans les réglages.';
+    if (dimensions.every(name => suggestion[name] != null))
+      form.querySelector('summary').textContent = 'Dimensions du colis · '+dimensions.map(name=>suggestion[name]).join(' × ')+' cm';
     form.querySelector('[type=submit]').disabled=!configured;
     submit(form,async()=>{
       const parcel={weightGrams:fields.weightGrams.valueAsNumber};
-      for(const name of ['lengthCm','widthCm','heightCm']) {
+      for(const name of dimensions) {
         if(fields[name].value) parcel[name]=fields[name].valueAsNumber;
       }
       let label;
@@ -249,6 +289,7 @@
     document.querySelectorAll('[data-tab]').forEach(b=>{const active=b.dataset.tab===tab;b.setAttribute('aria-pressed',String(active));$(b.dataset.tab).hidden=!active;});
     if(tab==='stock') {await loadProducts();await showStock();}
     if(tab==='commandes') await loadOrders();
+    if(tab==='colis' && defaultsRevision===null) await loadParcelDefaults();
   }));
   async function init() {
     try {

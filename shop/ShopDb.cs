@@ -17,6 +17,8 @@ public class ShopDb(DbContextOptions<ShopDb> options) : DbContext(options), IDat
     public DbSet<Product> Products => Set<Product>();
     public DbSet<ProductListing> Listings => Set<ProductListing>();
     public DbSet<ProductPhoto> Photos => Set<ProductPhoto>();
+    public DbSet<ProductShippingWeight> ShippingWeights => Set<ProductShippingWeight>();
+    public DbSet<ParcelDefaults> ParcelDefaults => Set<ParcelDefaults>();
     public DbSet<StockMovement> Movements => Set<StockMovement>();
     public DbSet<Stock> Stock => Set<Stock>();
     public DbSet<ShopOrder> Orders => Set<ShopOrder>();
@@ -33,6 +35,7 @@ public class ShopDb(DbContextOptions<ShopDb> options) : DbContext(options), IDat
         model.Entity<ProductListing>().HasKey(l => l.ProductId);
         model.Entity<ProductListing>().HasOne(l => l.Product).WithOne().HasForeignKey<ProductListing>(l => l.ProductId);
         model.Entity<ProductPhoto>().HasKey(p => p.ProductId);
+        model.Entity<ProductShippingWeight>().HasKey(p => p.ProductId);
         model.Entity<StockMovement>().HasKey(m => m.Seq);
         model.Entity<Stock>().HasKey(s => new { s.ProductId, s.SizeCode });
         model.Entity<OrderLine>().HasKey(s => new { s.OrderId, s.ProductId, s.SizeCode });
@@ -179,6 +182,12 @@ public class ProductPhoto
     public string ProductId { get; set; } = "";
     public string ContentType { get; set; } = "";
     public byte[] Bytes { get; set; } = [];
+}
+[Table("product_shipping_weights")]
+public class ProductShippingWeight
+{
+    public string ProductId { get; set; } = "";
+    public int WeightGrams { get; set; }
 }
 [Table("stock_movements")]
 public class StockMovement

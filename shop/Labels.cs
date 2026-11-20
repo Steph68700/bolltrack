@@ -52,9 +52,9 @@ public class Labels(ShopDb db, IConfiguration config, IHttpClientFactory clients
                 throw new ShopProblem(503, "Configure les accès API 2, la collecte et les coordonnées d’expéditeur Mondial Relay.");
             var details = JsonSerializer.Deserialize<ShippingDetails>(order.DeliveryJson)
                 ?? throw new ShopProblem(409, "Coordonnées de livraison introuvables.");
-            if (parcel.WeightGrams < 1 || parcel.WeightGrams > (details.Locker == null ? 30000 : 25000)
+            if (parcel.WeightGrams < 10 || parcel.WeightGrams > (details.Locker == null ? 30000 : 25000)
                 || parcel.LengthCm is <= 0 || parcel.WidthCm is <= 0 || parcel.HeightCm is <= 0)
-                throw new ShopProblem(400, "Vérifie le poids du colis emballé (25 kg maximum en Locker, 30 kg à domicile) et les dimensions renseignées.");
+                throw new ShopProblem(400, "Vérifie le poids du colis emballé (10 g minimum, 25 kg maximum en Locker, 30 kg à domicile) et les dimensions renseignées.");
             document = BuildRequest(config, details, order, reference, parcel);
             db.Shipments.Add(shipment);
             await db.SaveChangesAsync(ct);

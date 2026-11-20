@@ -4,9 +4,9 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Administration de la boutique · BollTrack</title>
-  <link rel="icon" href="icon.jpg"><link rel="stylesheet" href="boutique-admin.css?v=20261120-etiquettes">
+  <link rel="icon" href="icon.jpg"><link rel="stylesheet" href="boutique-admin.css?v=20261120-colis">
   <script src="boutique-session.js?v=20261119" defer></script>
-  <script src="boutique-admin.js?v=20261120-etiquettes" defer></script>
+  <script src="boutique-admin.js?v=20261120-colis" defer></script>
 </head>
 <body>
   <header><a class="brand" href="boutique.html">BollTrack</a><a href="boutique.html">Voir la boutique ↗</a></header>
@@ -16,7 +16,7 @@
     <p id="session-email" hidden></p>
     <a class="action" id="login" href="/compte/connexion?retour=admin" hidden>Me connecter avec Entreli</a>
     <div id="workspace" hidden>
-      <nav aria-label="Administration"><button data-tab="produits" aria-pressed="true">Produits</button><button data-tab="stock" aria-pressed="false">Stock</button><button data-tab="commandes" aria-pressed="false">Commandes et retours</button></nav>
+      <nav aria-label="Administration"><button data-tab="produits" aria-pressed="true">Produits</button><button data-tab="stock" aria-pressed="false">Stock</button><button data-tab="commandes" aria-pressed="false">Commandes et retours</button><button data-tab="colis" aria-pressed="false">Colis par défaut</button></nav>
       <p id="feedback" role="status" aria-live="polite"></p>
       <section id="produits">
         <div class="section-head"><h2>Catalogue</h2><button type="button" id="new-product">Nouveau produit</button></div>
@@ -29,6 +29,7 @@
             <label>Collection<input name="collection" maxlength="70"></label>
             <label>Couleur<input name="color" maxlength="40"></label>
             <label>Coupe<input name="fit" maxlength="32"></label>
+            <label>Poids unitaire hors emballage (g)<input name="unitWeightGrams" type="number" min="1" max="30000" step="1"><small>Facultatif. À défaut, le poids habituel défini dans « Colis par défaut » s’applique.</small></label>
           </div>
           <div class="photo"><img id="preview" alt="Aperçu de la photo du produit" hidden><label>Photo du produit<input type="file" name="photo" accept="image/jpeg,image/png,image/webp"></label></div>
           <fieldset id="initial"><legend>Stock initial par taille</legend><div id="initial-rows"></div><button type="button" id="add-size">Ajouter une taille</button></fieldset>
@@ -55,7 +56,8 @@
         <template id="shipment-label-form">
           <form class="label-form">
             <h4>Étiquette Mondial Relay</h4>
-            <label>Poids du colis emballé (g)<input name="weightGrams" type="number" min="1" step="1" required></label>
+            <label>Poids du colis emballé (g)<input name="weightGrams" type="number" min="10" step="1" required></label>
+            <p class="weight-hint"></p>
             <details><summary>Dimensions du colis (facultatif)</summary>
               <div class="fields">
                 <label>Longueur (cm)<input name="lengthCm" type="number" min="1" step="1"></label>
@@ -69,6 +71,28 @@
         <label>Afficher<select id="order-filter"><option value="preparer">À préparer ou à expédier</option><option value="expediees">Commandes expédiées</option><option value="toutes">Toutes les commandes</option><option value="retours">Demandes de retour</option></select></label>
         <div id="orders" aria-live="polite"></div>
         <div class="pages"><button id="previous" type="button" disabled>Page précédente</button><span id="page"></span><button id="next" type="button" disabled>Page suivante</button></div>
+      </section>
+      <section id="colis" hidden>
+        <div class="section-head"><h2>Colis par défaut</h2><button type="button" id="reload-defaults">Actualiser</button></div>
+        <p>Le poids proposé pour l’étiquette additionne les articles de la commande et le poids d’un seul emballage. Tu peux l’ajuster avant de générer l’étiquette.</p>
+        <form id="parcel-defaults">
+          <fieldset id="parcel-settings" disabled>
+            <legend>Poids</legend>
+            <div class="fields">
+              <label>Poids habituel d’un article (g)<input name="unitWeightGrams" type="number" min="1" max="30000" step="1"><small>Utilisé pour les produits dont la fiche ne précise aucun poids.</small></label>
+              <label>Poids de l’emballage vide (g)<input name="packagingGrams" type="number" min="0" max="30000" step="1"><small>Pèse une fois ton emballage habituel, avec ses protections.</small></label>
+            </div>
+          </fieldset>
+          <fieldset id="parcel-dimensions" disabled>
+            <legend>Dimensions extérieures du colis fermé (facultatives)</legend>
+            <div class="fields">
+              <label>Longueur (cm)<input name="lengthCm" type="number" min="1" step="1"></label>
+              <label>Largeur (cm)<input name="widthCm" type="number" min="1" step="1"></label>
+              <label>Hauteur (cm)<input name="heightCm" type="number" min="1" step="1"></label>
+            </div>
+          </fieldset>
+          <button type="submit" class="action" disabled>Enregistrer les valeurs par défaut</button>
+        </form>
       </section>
     </div>
   </main>
